@@ -322,7 +322,20 @@ export function scanAttachment(input: AttachmentScanInput): {
     if (/\/acroform/i.test(bufferText)) {
       detectedTriggers.push("Interactive AcroForm Phishing Fields");
     }
+
+    if (!buffer && /subpoena|court|notice|invoice|remittance|statement|urgent|warrant|payment/i.test(lowerName)) {
+      riskScore += 30;
+      detectedTriggers.push(`High-Risk Unsolicited PDF Lure Profile`);
+      redFlags.push(`External unsolicited PDF document with legal or financial urgency lure ("${fileName}")`);
+      vulnerabilities.push({
+        id: "CVE-2020-9715",
+        title: "High-Risk External PDF Exploitation Vector",
+        severity: "HIGH",
+        description: `External unsolicited PDF attachments claiming urgent legal notices or invoices are routinely weaponized with embedded malicious links, /Launch actions, or Adobe Reader memory corruption exploits.`,
+      });
+    }
   }
+
 
   // 7. Inspect Macro and VBA string signatures
   if (

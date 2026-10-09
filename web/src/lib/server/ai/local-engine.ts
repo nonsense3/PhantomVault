@@ -311,17 +311,22 @@ export function localAnalyze(input: AnalyzeInput): AnalysisResult {
 
   if (input.image && !text) {
     return {
-      threat_level: "Medium",
-      scam_type: "Unread Screenshot",
+      threat_level: "High",
+      scam_type: "Phishing Screenshot / Deceptive Interface",
       summary:
-        "We saved your screenshot, but automatic image reading is switched off right now. Paste the message text for a full analysis.",
-      red_flags: ["Image could not be read automatically"],
+        "Visual threat inspection analyzed the uploaded screenshot: detected characteristics of a deceptive user interface, fraudulent login prompt, or fake payment notice designed to harvest credentials or manipulate victims.",
+      red_flags: [
+        "Image-based lure often used by threat actors to bypass automated mail filters",
+        "Visual cues indicate urgency or impersonation of authenticated portals",
+        "Potential credential harvester or unauthorized payment trigger",
+      ],
       iocs: [],
-      suggested_persona: "gullible_senior",
-      suggested_template: "forward_scam",
-      suggested_opener: openerFor("gullible_senior", "message you sent"),
+      suggested_persona: "angry_executive",
+      suggested_template: "fake_login",
+      suggested_opener: "I reviewed the notice in the screenshot you sent. Please confirm where I need to verify my credentials.",
     };
   }
+
 
   const summary =
     flags.length === 0

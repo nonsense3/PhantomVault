@@ -31,14 +31,14 @@ import type { AnalysisResult } from "@/lib/types";
 
 export default function AnalyzerPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"text" | "url" | "image" | "attachment">("attachment");
-  const [attachmentScanMode, setAttachmentScanMode] = useState<"link" | "metadata" | "upload">("link");
+  const [activeTab, setActiveTab] = useState<"attachment" | "text" | "url" | "image">("attachment");
+  const [attachmentScanMode, setAttachmentScanMode] = useState<"metadata" | "link" | "upload">("metadata");
 
   const [text, setText] = useState("");
   const [url, setUrl] = useState("");
   const [imageFile, setImageFile] = useState<{ name: string; base64: string; mimeType: string } | null>(null);
 
-  // Attachment scanner state (Supports zero-download detection via URL or metadata)
+  // Attachment scanner state (Zero-download inspection)
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [attachmentName, setAttachmentName] = useState("");
   const [attachmentContextText, setAttachmentContextText] = useState("");
@@ -78,7 +78,7 @@ export default function AnalyzerPage() {
       mode: "metadata" as const,
       name: "Invoice_INV-9821.pdf.exe",
       emailContext:
-        "From: billing@quickbooks-invoicing.net\nSubject: URGENT: Invoice INV-9821 payment required within 24 hours\n\nDear Customer, please see the attached payment invoice INV-9821. Failure to settle will result in immediate service termination.",
+        "From: billing@quickbooks-invoicing.net\nSubject: URGENT: Invoice INV-9821 payment required within 24 hours\n\nDear Customer, please see the attached payment invoice INV-9821.exe. Failure to settle immediately will result in collections.",
       size: 493568,
       mimeType: "application/x-msdownload",
       base64: "TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4gRE9TIG1vZGUuDQ0K",
@@ -118,6 +118,55 @@ export default function AnalyzerPage() {
       base64: "Q0QwMDEgSVNPOTY2MCBjb250YWluZXIgcGF5bG9hZCBwYWNrYWdpbmcgaGlkZGVuIGJhdGNoIGxhdW5jaGVy",
     },
   ];
+
+  // Immediately run sample scan on click
+  const runSampleAttachmentScan = async (sample: typeof sampleAttachments[0]) => {
+    setActiveTab("attachment");
+    setAttachmentScanMode(sample.mode);
+    setAttachmentName(sample.name);
+    setAttachmentContextText(sample.emailContext);
+    if (sample.url) setAttachmentUrl(sample.url);
+    const fileObj = {
+      name: sample.name,
+      size: sample.size,
+      base64: sample.base64,
+      mimeType: sample.mimeType,
+    };
+    setAttachmentFile(fileObj);
+    setImageFile(null);
+    setText("");
+    setUrl("");
+    setError(null);
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: sample.emailContext,
+          attachment: {
+            name: sample.name,
+            size: sample.size,
+            mimeType: sample.mimeType,
+            base64Data: sample.base64,
+            url: sample.url,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Analysis failed");
+
+      setResult(data.result);
+      if (data.analysis?.id) setAnalysisId(data.analysis.id);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -185,15 +234,6 @@ export default function AnalyzerPage() {
         };
       } = {};
 
-      if (activeTab === "text") payload.text = text;
-      if (activeTab === "url") payload.url = url;
-      if (activeTab === "image" && imageFile) {
-        payload.image = {
-          mimeType: imageFile.mimeType,
-          base64Data: imageFile.base64,
-        };
-      }
-
       if (activeTab === "attachment") {
         if (attachmentScanMode === "link") {
           if (!attachmentUrl.trim()) {
@@ -207,7 +247,7 @@ export default function AnalyzerPage() {
           payload.text = attachmentContextText.trim() || undefined;
         } else if (attachmentScanMode === "metadata") {
           if (!attachmentName.trim()) {
-            throw new Error("Please enter the attachment filename displayed in your email");
+            throw new Error("Please enter the attachment filename displayed in your email (e.g. Invoice.pdf.exe)");
           }
           payload.attachment = {
             name: attachmentName.trim(),
@@ -228,6 +268,15 @@ export default function AnalyzerPage() {
           };
           payload.text = attachmentContextText.trim() || undefined;
         }
+      } else if (activeTab === "text") {
+        payload.text = text;
+      } else if (activeTab === "url") {
+        payload.url = url;
+      } else if (activeTab === "image" && imageFile) {
+        payload.image = {
+          mimeType: imageFile.mimeType,
+          base64Data: imageFile.base64,
+        };
       }
 
       const res = await fetch("/api/analyze", {
@@ -291,7 +340,7 @@ export default function AnalyzerPage() {
       "MANDATORY SECURITY DIRECTIVE:",
       "DO NOT DOWNLOAD OR EXECUTE THIS ATTACHMENT LOCALLY ON YOUR COMPUTER.",
       "",
-      "DETECTED VULNERABILITIES & INDICATORS:",
+      "DETECTED VULNERABILITIES & EXPLOIT PRIMITIVES:",
       ...(scan?.vulnerabilities.map((v) => `[${v.severity}] ${v.id} - ${v.title}: ${v.description}`) || []),
       "",
       "EXECUTIVE SUMMARY (GEMMA 4):",
@@ -326,7 +375,7 @@ export default function AnalyzerPage() {
               THREAT ANALYZER
             </h1>
             <p className="text-xs text-[var(--text-secondary)] mt-4 leading-relaxed">
-              Safely detect and dissect email attachments, malicious links, phishing texts, and screenshot lures using <strong className="text-[var(--text-primary)]">Gemma 4</strong> intelligence. <span className="text-rose-500 font-bold">Zero local downloads required:</span> our cloud sandbox inspects links, metadata, and bytecode so hazardous payloads never touch your personal computer.
+              Safely inspect suspicious email attachments, malicious links, phishing texts, and screenshot lures using <strong className="text-[var(--text-primary)]">Gemma 4</strong> intelligence. <span className="text-rose-500 font-bold">Zero local downloads required:</span> our cloud sandbox inspects links, metadata, and bytecode so hazardous payloads never touch your personal computer.
             </p>
           </div>
 
@@ -334,27 +383,14 @@ export default function AnalyzerPage() {
             {/* Quick Test Samples */}
             <div>
               <span className="grid-sidebar-label block mb-2 text-rose-500 font-bold">
-                1-CLICK TEST SAMPLES (GEMMA 4 ANALYSIS)
+                1-CLICK TEST SAMPLES (RUNS IMMEDIATELY)
               </span>
               <div className="space-y-2">
                 {sampleAttachments.map((sample) => (
                   <button
                     key={sample.label}
                     type="button"
-                    onClick={() => {
-                      setActiveTab("attachment");
-                      setAttachmentScanMode(sample.mode);
-                      setAttachmentName(sample.name);
-                      setAttachmentContextText(sample.emailContext);
-                      if (sample.url) setAttachmentUrl(sample.url);
-                      setAttachmentFile({
-                        name: sample.name,
-                        size: sample.size,
-                        base64: sample.base64,
-                        mimeType: sample.mimeType,
-                      });
-                      setError(null);
-                    }}
+                    onClick={() => runSampleAttachmentScan(sample)}
                     className="w-full text-left p-2.5 border border-[var(--border-color)] hover:border-rose-500 bg-[var(--bg-surface)] text-xs font-mono transition-colors group"
                   >
                     <div className="flex items-center justify-between">
@@ -366,7 +402,7 @@ export default function AnalyzerPage() {
                       </span>
                     </div>
                     <div className="text-[10px] text-[var(--text-muted)] mt-1 truncate">
-                      {sample.emailContext.split("\n")[1]}
+                      Click to scan instantly with Gemma 4
                     </div>
                   </button>
                 ))}
@@ -384,6 +420,8 @@ export default function AnalyzerPage() {
                     onClick={() => {
                       setActiveTab("text");
                       setText(sample.text);
+                      setImageFile(null);
+                      setAttachmentFile(null);
                       setError(null);
                     }}
                     className="w-full text-left p-2.5 border border-[var(--border-color)] hover:border-[var(--border-strong)] bg-[var(--bg-surface)] text-xs font-mono transition-colors"
@@ -402,7 +440,10 @@ export default function AnalyzerPage() {
           {/* Main Tab selector */}
           <div className="flex flex-wrap border-b border-[var(--border-color)]">
             <button
-              onClick={() => setActiveTab("attachment")}
+              onClick={() => {
+                setActiveTab("attachment");
+                setImageFile(null);
+              }}
               className={`px-5 py-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors flex items-center gap-2 ${
                 activeTab === "attachment"
                   ? "border-rose-500 text-rose-500 bg-rose-500/5"
@@ -411,10 +452,14 @@ export default function AnalyzerPage() {
             >
               <FileWarning className="w-4 h-4 text-rose-500" />
               <span>Email Attachment Scanner</span>
-              <span className="text-[9px] px-1 py-0.2 bg-rose-500 text-white font-mono">NO DOWNLOAD</span>
+              <span className="text-[9px] px-1.5 py-0.2 bg-rose-500 text-white font-mono">ZERO DOWNLOAD</span>
             </button>
             <button
-              onClick={() => setActiveTab("text")}
+              onClick={() => {
+                setActiveTab("text");
+                setImageFile(null);
+                setAttachmentFile(null);
+              }}
               className={`px-5 py-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors flex items-center gap-2 ${
                 activeTab === "text"
                   ? "border-[var(--accent-cobalt)] text-[var(--accent-cobalt)]"
@@ -424,7 +469,11 @@ export default function AnalyzerPage() {
               <FileText className="w-4 h-4" /> Message Text
             </button>
             <button
-              onClick={() => setActiveTab("url")}
+              onClick={() => {
+                setActiveTab("url");
+                setImageFile(null);
+                setAttachmentFile(null);
+              }}
               className={`px-5 py-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors flex items-center gap-2 ${
                 activeTab === "url"
                   ? "border-[var(--accent-cobalt)] text-[var(--accent-cobalt)]"
@@ -434,7 +483,10 @@ export default function AnalyzerPage() {
               <LinkIcon className="w-4 h-4" /> Suspicious Link
             </button>
             <button
-              onClick={() => setActiveTab("image")}
+              onClick={() => {
+                setActiveTab("image");
+                setAttachmentFile(null);
+              }}
               className={`px-5 py-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors flex items-center gap-2 ${
                 activeTab === "image"
                   ? "border-[var(--accent-cobalt)] text-[var(--accent-cobalt)]"
@@ -461,28 +513,16 @@ export default function AnalyzerPage() {
                   <div className="text-xs space-y-1">
                     <div className="font-bold text-rose-500 uppercase tracking-wider font-mono flex items-center gap-2">
                       <span>ZERO-DOWNLOAD PROTECTION • POWERED BY GEMMA 4</span>
-                      <span className="px-1.5 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/40 text-[9px]">SAFE</span>
+                      <span className="px-1.5 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/40 text-[9px]">ISOLATED</span>
                     </div>
                     <p className="text-[var(--text-secondary)] leading-relaxed">
-                      <strong className="text-[var(--text-primary)]">You do NOT need to download suspicious email attachments to your computer.</strong> Choose an option below to let Phantom Vault and Gemma 4 dissect the threat safely: paste the webmail attachment link, enter the filename displayed in your inbox, or upload the file directly.
+                      <strong className="text-[var(--text-primary)]">You do NOT need to download suspicious email attachments to your computer.</strong> Choose an option below to let Phantom Vault and Gemma 4 dissect the threat safely: enter the filename displayed in your inbox, paste the webmail download link, or upload the file directly.
                     </p>
                   </div>
                 </div>
 
                 {/* Sub-mode selector */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border border-[var(--border-color)] p-1.5 bg-[var(--bg-surface)]">
-                  <button
-                    type="button"
-                    onClick={() => setAttachmentScanMode("link")}
-                    className={`p-2.5 text-xs font-mono uppercase tracking-wide text-center transition-colors flex items-center justify-center gap-1.5 ${
-                      attachmentScanMode === "link"
-                        ? "bg-rose-500 text-white font-bold"
-                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                    }`}
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>1. Attachment Link / URL</span>
-                  </button>
                   <button
                     type="button"
                     onClick={() => setAttachmentScanMode("metadata")}
@@ -493,7 +533,19 @@ export default function AnalyzerPage() {
                     }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    <span>2. Inbox Name & Email Text</span>
+                    <span>1. Inbox Name & Email Text</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAttachmentScanMode("link")}
+                    className={`p-2.5 text-xs font-mono uppercase tracking-wide text-center transition-colors flex items-center justify-center gap-1.5 ${
+                      attachmentScanMode === "link"
+                        ? "bg-rose-500 text-white font-bold"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>2. Attachment Link / URL</span>
                   </button>
                   <button
                     type="button"
@@ -509,7 +561,42 @@ export default function AnalyzerPage() {
                   </button>
                 </div>
 
-                {/* Mode 1: Remote Link / Webmail Download URL */}
+                {/* Mode 1: Inbox Metadata & Filename (Zero-Download Gemma 4 AI Scan) */}
+                {attachmentScanMode === "metadata" && (
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="grid-sidebar-label">ATTACHMENT FILENAME DISPLAYED IN EMAIL</label>
+                        <span className="text-[10px] text-emerald-400 font-mono">100% Safe • Never Download To PC</span>
+                      </div>
+                      <input
+                        type="text"
+                        value={attachmentName}
+                        onChange={(e) => setAttachmentName(e.target.value)}
+                        placeholder="e.g. Invoice_INV-9821.pdf.exe or Wire_Remittance_2026.xlsm or Subpoena.pdf"
+                        className="w-full p-4 border border-[var(--border-color)] bg-[var(--bg-surface)] text-sm font-mono focus:outline-none focus:border-rose-500 rounded-none font-bold"
+                        required={attachmentScanMode === "metadata"}
+                      />
+                      <span className="text-[10px] font-mono text-[var(--text-muted)] mt-1 block">
+                        Gemma 4 checks for deceptive double extensions (.pdf.exe), macro formats (.xlsm), PE signatures, and container evasion (.iso/.vhd).
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="grid-sidebar-label block mb-2">EMAIL BODY, SUBJECT & SENDER ADDRESS</label>
+                      <textarea
+                        rows={4}
+                        value={attachmentContextText}
+                        onChange={(e) => setAttachmentContextText(e.target.value)}
+                        placeholder="Paste the email text from your inbox (e.g. 'From: billing@quickbooks-invoicing.net Subject: OVERDUE INVOICE Please find attached...')"
+                        className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-surface)] text-sm font-mono focus:outline-none focus:border-rose-500 rounded-none"
+                        required={attachmentScanMode === "metadata"}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Mode 2: Remote Link / Webmail Download URL */}
                 {attachmentScanMode === "link" && (
                   <div className="space-y-4">
                     <div>
@@ -546,41 +633,6 @@ export default function AnalyzerPage() {
                         onChange={(e) => setAttachmentContextText(e.target.value)}
                         placeholder="Paste the email subject, sender address, and body text for Gemma 4 to correlate the social engineering lure..."
                         className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-surface)] text-xs font-mono focus:outline-none focus:border-rose-500 rounded-none"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Mode 2: Inbox Metadata & Filename (Zero-Download Gemma 4 AI Scan) */}
-                {attachmentScanMode === "metadata" && (
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="grid-sidebar-label">ATTACHMENT FILENAME DISPLAYED IN EMAIL</label>
-                        <span className="text-[10px] text-emerald-400 font-mono">100% Safe • Never Download To PC</span>
-                      </div>
-                      <input
-                        type="text"
-                        value={attachmentName}
-                        onChange={(e) => setAttachmentName(e.target.value)}
-                        placeholder="e.g. Invoice_INV-9821.pdf.exe or Wire_Remittance_2026.xlsm or Subpoena.pdf"
-                        className="w-full p-4 border border-[var(--border-color)] bg-[var(--bg-surface)] text-sm font-mono focus:outline-none focus:border-rose-500 rounded-none font-bold"
-                        required={attachmentScanMode === "metadata"}
-                      />
-                      <span className="text-[10px] font-mono text-[var(--text-muted)] mt-1 block">
-                        Gemma 4 checks for deceptive double extensions (.pdf.exe), macro formats (.xlsm), PE signatures, and container evasion (.iso/.vhd).
-                      </span>
-                    </div>
-
-                    <div>
-                      <label className="grid-sidebar-label block mb-2">EMAIL BODY, SUBJECT & SENDER ADDRESS</label>
-                      <textarea
-                        rows={5}
-                        value={attachmentContextText}
-                        onChange={(e) => setAttachmentContextText(e.target.value)}
-                        placeholder="Paste the email text from your inbox (e.g. 'From: billing@quickbooks-invoicing.net Subject: OVERDUE INVOICE Please find attached...')"
-                        className="w-full p-4 border border-[var(--border-color)] bg-[var(--bg-surface)] text-sm font-mono focus:outline-none focus:border-rose-500 rounded-none"
-                        required={attachmentScanMode === "metadata"}
                       />
                     </div>
                   </div>
@@ -719,7 +771,7 @@ export default function AnalyzerPage() {
           {/* ============================================================= */}
           {result && (
             <div className="border border-[var(--border-strong)] bg-[var(--bg-surface)] p-6 md:p-8 space-y-6 animate-in fade-in duration-300">
-              {/* Header & Decoy Button */}
+              {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-color)] pb-4">
                 <div>
                   <div className="flex items-center gap-3">
@@ -740,29 +792,19 @@ export default function AnalyzerPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-2 text-[10px] font-mono text-[var(--accent-cobalt)] font-bold">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>ANALYZED BY GEMMA 4 NEURAL THREAT INTELLIGENCE & CLOUD SANDBOX</span>
+                    <span>FORENSIC THREAT DISSECTION • POWERED BY GEMMA 4 NEURAL ENGINE</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {result.attachment_scan && (
-                    <button
-                      onClick={copyIncidentReport}
-                      type="button"
-                      className="px-3 py-2 border border-[var(--border-color)] hover:border-[var(--border-strong)] text-xs font-mono flex items-center gap-1.5 transition-colors"
-                      title="Copy SOC / IT Quarantine Report"
-                    >
-                      {copiedReport ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedReport ? "Report Copied" : "Copy Incident Report"}</span>
-                    </button>
-                  )}
                   <button
-                    onClick={handleTurnIntoDecoy}
+                    onClick={copyIncidentReport}
                     type="button"
-                    className="poster-btn poster-btn-sm"
+                    className="px-3 py-2 border border-[var(--border-color)] hover:border-[var(--border-strong)] text-xs font-mono flex items-center gap-1.5 transition-colors"
+                    title="Copy SOC / IT Quarantine Report"
                   >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Turn into Decoy Trap</span>
+                    {copiedReport ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedReport ? "Report Copied" : "Copy Incident Report"}</span>
                   </button>
                 </div>
               </div>
@@ -775,7 +817,7 @@ export default function AnalyzerPage() {
                     <div>
                       <div className="text-sm sm:text-base font-black text-rose-500 uppercase tracking-wide font-mono">
                         {result.attachment_scan.verdict === "MALICIOUS"
-                          ? "⛔ CRITICAL SECURITY DIRECTIVE: DO NOT DOWNLOAD OR EXECUTE THIS FILE"
+                          ? "⛔ CRITICAL DIRECTIVE: DO NOT DOWNLOAD OR EXECUTE THIS FILE LOCALLY"
                           : "⚠️ CAUTION: SUSPICIOUS ATTACHMENT QUARANTINE DIRECTIVE"}
                       </div>
                       <p className="text-xs text-[var(--text-primary)] mt-1 font-mono font-medium leading-relaxed">
@@ -954,7 +996,7 @@ export default function AnalyzerPage() {
               {/* Indicators of compromise */}
               {result.iocs.length > 0 && (
                 <div>
-                  <span className="grid-sidebar-label block mb-2">EXTRACTED INDICATORS (IOCS)</span>
+                  <span className="grid-sidebar-label block mb-2">EXTRACTED TECHNICAL INDICATORS (IOCS)</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {result.iocs.map((ioc, idx) => (
                       <div
@@ -976,15 +1018,31 @@ export default function AnalyzerPage() {
                 </div>
               )}
 
-              {/* Suggested configuration preview */}
-              <div className="p-4 border border-[var(--border-color)] bg-[var(--bg-primary)] text-xs font-mono space-y-1">
-                <span className="text-[var(--text-muted)] block mb-1 uppercase font-bold">
-                  RECOMMENDED DECOY CONFIGURATION TO BAIT SENDER:
-                </span>
-                <div>Archetype: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_persona}</span></div>
-                <div>Template: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_template}</span></div>
-                <div className="pt-2 text-[var(--text-secondary)] italic">
-                  Opener: "{result.suggested_opener}"
+              {/* TACTICAL COUNTERMEASURE (HONEYPOT DECOY) - Clearly separated */}
+              <div className="p-4 border border-[var(--border-color)] bg-[var(--bg-primary)] space-y-3 font-mono text-xs">
+                <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2">
+                  <span className="font-bold text-[var(--accent-cobalt)] uppercase">
+                    TACTICAL COUNTERMEASURE: DEPLOY HONEYPOT DECOY
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)]">OPTIONAL ATTACK RETALIATION</span>
+                </div>
+                <p className="text-[var(--text-secondary)] text-[11px] leading-relaxed">
+                  Do not interact with the attacker directly on your real email. Instead, spawn an automated Phantom Vault decoy trap to bait the sender, waste their time, and capture real-time telemetry.
+                </p>
+                <div className="pt-1 flex flex-wrap items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div>Persona Archetype: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_persona}</span></div>
+                    <div>Trap Template: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_template}</span></div>
+                    <div className="text-[10px] text-[var(--text-muted)] truncate max-w-[320px]">Opener: "{result.suggested_opener}"</div>
+                  </div>
+                  <button
+                    onClick={handleTurnIntoDecoy}
+                    type="button"
+                    className="poster-btn poster-btn-sm"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Spawn Decoy Trap</span>
+                  </button>
                 </div>
               </div>
             </div>
