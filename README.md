@@ -2,7 +2,7 @@
   <img src="logo.png" alt="PhantomVault AI Logo" width="160" height="160" />
 </p>
 
-<h1 align="center">PhantomVault AI</h1>
+<h1 align="center">PhantomVault</h1>
 
 <p align="center">
   <strong>Digital Decoy & Active Threat Intelligence Center</strong><br />
