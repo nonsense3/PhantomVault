@@ -17,14 +17,6 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License: MIT" /></a>
 </p>
 
----
-
-> **Track:** Gemma 4  
-> **Version:** 1.0 (Hackathon MVP)   
-> *Forward a scam, and let AI waste the scammer's time while you collect the evidence.*
-
----
-
 ## Visual Tour & System Highlights
 
 ### 1. System Architecture: Deception, Attrition, Extraction
@@ -240,4 +232,4 @@ PhantomVault/
 
 ## 8. License
 
-This project is open-source and licensed under the [MIT License](LICENSE).
+This project is open-source and licensed under the [MIT License](LICENSE).
