@@ -12,8 +12,15 @@ export async function POST(req: Request) {
       text?: string;
       url?: string;
       image?: { mimeType: string; base64Data: string };
-      attachment?: { name: string; size: number; mimeType: string; base64Data?: string };
+      attachment?: {
+        name: string;
+        size?: number;
+        mimeType?: string;
+        base64Data?: string;
+        url?: string;
+      };
     };
+
 
     if (!text && !url && !image && !attachment) {
       return NextResponse.json(
@@ -22,16 +29,41 @@ export async function POST(req: Request) {
       );
     }
 
+    let finalAttachment = attachment;
+
+    if (attachment?.url && !attachment.base64Data) {
+      try {
+        const { fetchRemoteAttachment } = await import("@/lib/server/ai");
+        const fetched = await fetchRemoteAttachment(attachment.url);
+        finalAttachment = {
+          name: attachment.name || fetched.name,
+          size: fetched.size,
+          mimeType: fetched.mimeType,
+          base64Data: fetched.base64Data,
+          url: attachment.url,
+        };
+      } catch (fetchErr) {
+        console.warn("[api:analyze] Remote attachment fetch error, proceeding with metadata and Gemma 4:", fetchErr);
+        finalAttachment = {
+          name: attachment.name || "remote_attachment.bin",
+          size: 0,
+          mimeType: "application/octet-stream",
+          url: attachment.url,
+        };
+      }
+    }
+
     const result = await analyzeScam({
       text: text?.trim(),
-      url: url?.trim(),
+      url: url?.trim() || finalAttachment?.url,
       image,
-      attachment,
+      attachment: finalAttachment,
     });
 
-    const preview = attachment
-      ? `Attachment: ${attachment.name} (${(attachment.size / 1024).toFixed(1)} KB)`
+    const preview = finalAttachment
+      ? `Attachment: ${finalAttachment.name}${finalAttachment.size ? ` (${(finalAttachment.size / 1024).toFixed(1)} KB)` : " (No-Download Cloud Scan)"}`
       : text || url || (image ? "Uploaded screenshot" : "Threat analysis input");
+
 
     const record = await createAnalysis({
       ownerId: user.id,

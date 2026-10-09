@@ -45,11 +45,13 @@ export interface AnalyzeInput {
   };
   attachment?: {
     name: string;
-    size: number;
-    mimeType: string;
+    size?: number;
+    mimeType?: string;
     base64Data?: string;
+    url?: string;
   };
 }
+
 
 
 export type PortalStep = "login" | "otp" | "security" | "transfer";

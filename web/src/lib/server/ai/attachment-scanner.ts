@@ -13,16 +13,88 @@ import { extractIocs } from "./iocs";
 
 export interface AttachmentScanInput {
   name: string;
-  size: number;
+  size?: number;
   mimeType?: string;
   base64Data?: string;
 }
 
+export async function fetchRemoteAttachment(urlStr: string): Promise<{
+  name: string;
+  size: number;
+  mimeType: string;
+  base64Data: string;
+}> {
+  const parsed = new URL(urlStr);
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("Invalid attachment URL protocol (must be http or https)");
+  }
+
+  // SSRF guard: reject local and private IP addresses
+  const host = parsed.hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "0.0.0.0" ||
+    host === "::1" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    /^10\./.test(host) ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^169\.254\./.test(host)
+  ) {
+    throw new Error("Access to local or private network addresses is blocked for safety");
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const res = await fetch(urlStr, {
+      method: "GET",
+      headers: {
+        "User-Agent": "PhantomVault-ThreatScanner/2.0 (Forensic Cloud Sandbox)",
+      },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Remote server returned HTTP ${res.status}`);
+    }
+
+    const mimeType = res.headers.get("content-type") || "application/octet-stream";
+    const disposition = res.headers.get("content-disposition") || "";
+
+    let fileName = "";
+    const match = /filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?/i.exec(disposition);
+    if (match && match[1]) {
+      fileName = decodeURIComponent(match[1]);
+    } else {
+      const pathname = parsed.pathname;
+      fileName = pathname.split("/").filter(Boolean).pop() || "remote_attachment.bin";
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer).subarray(0, 15 * 1024 * 1024);
+
+    return {
+      name: fileName,
+      size: buffer.length,
+      mimeType,
+      base64Data: buffer.toString("base64"),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function formatBytes(bytes: number): string {
+  if (!bytes || bytes <= 0) return "Metadata Only (Not Downloaded)";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
+
 
 const EXECUTABLE_EXTENSIONS = new Set([
   "exe", "scr", "bat", "cmd", "ps1", "vbs", "vbe", "js", "jse", "wsf",
@@ -63,13 +135,16 @@ export function scanAttachment(input: AttachmentScanInput): {
     }
   }
 
+  const finalSize = typeof input.size === "number" ? input.size : (buffer ? buffer.length : 0);
+
   // Cryptographic hashing (safe in-memory)
   const sha256 = buffer
     ? createHash("sha256").update(buffer).digest("hex")
-    : createHash("sha256").update(fileName + input.size).digest("hex");
+    : createHash("sha256").update(fileName + finalSize).digest("hex");
   const md5 = buffer
     ? createHash("md5").update(buffer).digest("hex")
-    : createHash("md5").update(fileName + input.size).digest("hex");
+    : createHash("md5").update(fileName + finalSize).digest("hex");
+
 
   // Magic byte header detection
   let magicHeader = "Unknown / Plain Text";
@@ -367,7 +442,7 @@ export function scanAttachment(input: AttachmentScanInput): {
       ? `Hello dear, I got your email with "${fileName}", but my computer gave me a big red warning when I tried to open it. Can you tell me what is inside or give me a link to see it?`
       : `Hey, saw your email with "${fileName}". My antivirus quarantined it automatically and won't let me open it. What did you need from me?`;
 
-  const summary = `Static attachment analysis of "${fileName}" (${formatBytes(input.size)}) classified as ${threatLevel.toUpperCase()} THREAT (${verdict}). ${
+  const summary = `Static attachment analysis of "${fileName}" (${formatBytes(finalSize)}) classified as ${threatLevel.toUpperCase()} THREAT (${verdict}). ${
     vulnerabilities.length > 0
       ? `Identified ${vulnerabilities.length} active vulnerability / exploitation indicators: ${vulnerabilities.map((v) => v.id).join(", ")}.`
       : `No known active exploit signatures, but strict quarantine is advised for external email attachments.`
@@ -375,9 +450,10 @@ export function scanAttachment(input: AttachmentScanInput): {
 
   const scanDetails: AttachmentScanDetails = {
     fileName,
-    fileSize: input.size,
-    formattedSize: formatBytes(input.size),
+    fileSize: finalSize,
+    formattedSize: formatBytes(finalSize),
     fileType: detectedFileType,
+
     mimeType: input.mimeType || "application/octet-stream",
     sha256,
     md5,
