@@ -27,7 +27,15 @@ export async function GET(request: Request) {
       // Upsert profile record
       const admin = getSupabaseAdmin();
       if (admin) {
+        const { data: existingProfile } = await admin
+          .from("profiles")
+          .select("display_name")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
         const displayName =
+          existingProfile?.display_name ||
+          data.user.user_metadata?.display_name ||
           data.user.user_metadata?.full_name ||
           data.user.user_metadata?.name ||
           data.user.user_metadata?.user_name ||

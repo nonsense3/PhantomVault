@@ -151,24 +151,85 @@ export async function updateProfile(
 
   if (updates.displayName !== undefined) {
     const cleanName = updates.displayName.trim();
-    await admin
+    const { error: pErr } = await admin
       .from("profiles")
       .upsert(
         { id: userId, display_name: cleanName },
         { onConflict: "id" }
       );
+    if (pErr) {
+      console.error("[repo:updateProfile] profiles upsert error:", pErr);
+    }
 
     try {
       await admin.auth.admin.updateUserById(userId, {
-        user_metadata: { display_name: cleanName },
+        user_metadata: {
+          display_name: cleanName,
+          full_name: cleanName,
+          name: cleanName,
+        },
       });
-    } catch {
-      // Ignored if provider managed
+    } catch (authErr) {
+      console.warn("[repo:updateProfile] auth metadata update warning:", authErr);
     }
   }
 
   return getUserById(userId);
 }
+
+export async function deleteUserAccount(userId: string): Promise<boolean> {
+  const admin = getSupabaseAdmin();
+  if (!admin) {
+    throw new Error("Supabase administration client unavailable");
+  }
+
+  // 1. Explicitly purge dependent rows in child tables (failsafe alongside Postgres CASCADE)
+  try {
+    await admin.from("iocs").delete().eq("owner_id", userId);
+  } catch (err) {
+    console.warn("[repo:deleteUserAccount] iocs purge warning:", err);
+  }
+
+  try {
+    await admin.from("messages").delete().eq("owner_id", userId);
+  } catch (err) {
+    console.warn("[repo:deleteUserAccount] messages purge warning:", err);
+  }
+
+  try {
+    await admin.from("analyses").delete().eq("owner_id", userId);
+  } catch (err) {
+    console.warn("[repo:deleteUserAccount] analyses purge warning:", err);
+  }
+
+  try {
+    await admin.from("incidents").delete().eq("owner_id", userId);
+  } catch (err) {
+    console.warn("[repo:deleteUserAccount] incidents purge warning:", err);
+  }
+
+  try {
+    await admin.from("traps").delete().eq("owner_id", userId);
+  } catch (err) {
+    console.warn("[repo:deleteUserAccount] traps purge warning:", err);
+  }
+
+  try {
+    await admin.from("profiles").delete().eq("id", userId);
+  } catch (err) {
+    console.warn("[repo:deleteUserAccount] profiles purge warning:", err);
+  }
+
+  // 2. Permanently delete user from Supabase auth.users
+  const { error } = await admin.auth.admin.deleteUser(userId);
+  if (error) {
+    console.error("[repo:deleteUserAccount] auth admin deleteUser error:", error);
+    throw new Error(error.message || "Failed to permanently decommission operator account");
+  }
+
+  return true;
+}
+
 
 /* ------------------------------------------------------------------------- */
 /* Traps                                                                     */

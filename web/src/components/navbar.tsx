@@ -19,12 +19,30 @@ export function Navbar() {
   const [user, setUser] = useState<UserInfo | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.user) setUser(data.user);
-      })
-      .catch(() => {});
+    const loadUser = () => {
+      fetch("/api/auth/me")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.user) setUser(data.user);
+        })
+        .catch(() => {});
+    };
+
+    loadUser();
+
+    const handleProfileUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<any>;
+      if (customEvent.detail?.displayName) {
+        setUser((prev) => (prev ? { ...prev, displayName: customEvent.detail.displayName } : prev));
+      } else {
+        loadUser();
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdate);
+    };
   }, []);
 
   const handleLogout = async () => {

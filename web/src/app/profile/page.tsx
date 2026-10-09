@@ -23,6 +23,9 @@ import {
   Download,
   ExternalLink,
   CloudUpload,
+  AlertTriangle,
+  Trash2,
+  X,
 } from "lucide-react";
 import { formatDuration } from "@/lib/format";
 import type { DashboardStats, Incident } from "@/lib/types";
@@ -64,6 +67,12 @@ export default function ProfilePage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState(false);
+
+  // Account Decommissioning state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -130,12 +139,42 @@ export default function ProfilePage() {
 
       setUser(data.user);
       setSaveSuccess(true);
+      window.dispatchEvent(
+        new CustomEvent("profile-updated", { detail: data.user })
+      );
       setTimeout(() => setSaveSuccess(false), 3000);
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmationInput.trim().toUpperCase() !== "DELETE") {
+      setDeleteError('Please type "DELETE" to confirm account deletion.');
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const res = await fetch("/api/auth/me", {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to decommission operator account");
+      }
+
+      window.dispatchEvent(new CustomEvent("profile-updated", { detail: null }));
+      router.push("/login?message=account_deleted");
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : "Account deletion failed");
+      setDeleting(false);
     }
   };
 
@@ -276,15 +315,27 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Sign Out Button */}
-              <div className="pt-4 border-t border-[var(--border-color)]">
+              {/* Session Termination & Decommission Buttons */}
+              <div className="pt-4 border-t border-[var(--border-color)] space-y-2">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full p-3 border border-red-500/40 hover:border-red-500 bg-red-500/5 hover:bg-red-500/10 text-red-500 text-xs font-mono uppercase font-bold tracking-wider flex items-center justify-center gap-2 transition-colors rounded-none"
+                  className="w-full p-2.5 border border-[var(--border-color)] hover:border-[var(--text-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-mono uppercase font-bold tracking-wider flex items-center justify-center gap-2 transition-colors rounded-none"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>TERMINATE SESSION (SIGN OUT)</span>
+                  <span>TERMINATE SESSION</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteConfirmationInput("");
+                    setDeleteError(null);
+                    setShowDeleteModal(true);
+                  }}
+                  className="w-full p-2.5 border border-red-500/40 hover:border-red-500 bg-red-500/5 hover:bg-red-500/15 text-red-500 text-xs font-mono uppercase font-bold tracking-wider flex items-center justify-center gap-2 transition-colors rounded-none"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>DELETE OPERATOR ACCOUNT</span>
                 </button>
               </div>
             </div>
@@ -740,9 +791,125 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
+
+            {/* Danger Zone: Account Decommissioning */}
+            <div className="border border-red-500/40 bg-red-500/5 p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-red-500">
+                  DANGER ZONE / IRREVERSIBLE
+                </span>
+              </div>
+              <h3 className="text-xl font-extrabold uppercase tracking-tight text-red-500">
+                DECOMMISSION & PURGE OPERATOR ACCOUNT
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-mono">
+                Permanently erase operator identity, active decoy traps, adversary chat transcripts, and extracted IoC records from the mesh database. This action cannot be undone.
+              </p>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteConfirmationInput("");
+                    setDeleteError(null);
+                    setShowDeleteModal(true);
+                  }}
+                  className="p-3 border border-red-500 bg-red-500 text-white hover:bg-red-600 text-xs font-mono uppercase font-bold tracking-wider flex items-center gap-2 transition-colors rounded-none"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>PURGE OPERATOR ACCOUNT</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[var(--bg-surface)] border border-red-500 max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3 text-red-500">
+                <div className="p-2 border border-red-500 bg-red-500/10">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest block text-red-400">
+                    CONFIRMATION REQUIRED
+                  </span>
+                  <h2 className="text-lg font-extrabold uppercase tracking-tight text-[var(--text-primary)]">
+                    DECOMMISSION OPERATOR ACCOUNT
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-[var(--text-secondary)] font-mono leading-relaxed bg-red-500/5 border border-red-500/20 p-4">
+              <p className="font-bold text-red-500">
+                [!] WARNING: THIS ACTION IS PERMANENT AND CANNOT BE REVERSED.
+              </p>
+              <p>
+                Target Operator: <strong>{user.email}</strong> ({user.id})
+              </p>
+              <p>
+                Executing this will permanently purge all deployed honeypots, intercepted attacker messages, and forensic telemetry dossiers.
+              </p>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 border border-red-500 bg-red-500/10 text-red-500 text-xs font-mono">
+                ERROR: {deleteError}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label
+                htmlFor="delete-confirm"
+                className="text-xs font-mono uppercase tracking-wider block text-[var(--text-muted)]"
+              >
+                Type <span className="text-red-500 font-bold">DELETE</span> to confirm decommissioning:
+              </label>
+              <input
+                id="delete-confirm"
+                type="text"
+                value={deleteConfirmationInput}
+                onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+                placeholder="DELETE"
+                className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm font-mono focus:outline-none focus:border-red-500 rounded-none uppercase"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setShowDeleteModal(false)}
+                className="poster-btn-secondary poster-btn-sm"
+              >
+                <span>Cancel</span>
+              </button>
+              <button
+                type="button"
+                disabled={deleting || deleteConfirmationInput.trim().toUpperCase() !== "DELETE"}
+                onClick={handleDeleteAccount}
+                className="p-3 border border-red-500 bg-red-500 text-white hover:bg-red-600 disabled:opacity-40 disabled:hover:bg-red-500 text-xs font-mono uppercase font-bold tracking-wider flex items-center justify-center gap-2 transition-colors rounded-none"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{deleting ? "Decommissioning..." : "Permanently Purge Account"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

@@ -70,22 +70,32 @@ export async function loginUser(
   }
 
   const u = data.user;
-  const displayName =
+  let displayName =
     u.user_metadata?.display_name ||
     u.user_metadata?.full_name ||
     u.email?.split("@")[0] ||
     "Security Lead";
 
-  // Ensure profile row exists
+  // Ensure profile row exists without overwriting custom display names
   const admin = getSupabaseAdmin();
   if (admin) {
-    await admin.from("profiles").upsert(
-      {
-        id: u.id,
-        display_name: displayName,
-      },
-      { onConflict: "id" }
-    );
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("display_name")
+      .eq("id", u.id)
+      .maybeSingle();
+
+    if (profile?.display_name) {
+      displayName = profile.display_name;
+    } else {
+      await admin.from("profiles").upsert(
+        {
+          id: u.id,
+          display_name: displayName,
+        },
+        { onConflict: "id" }
+      );
+    }
   }
 
   return {
