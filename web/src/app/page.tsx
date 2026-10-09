@@ -22,11 +22,6 @@ export default function HomePage() {
                   <div className="w-4 h-4 bg-[var(--text-primary)]" />
                   <span className="grid-sidebar-label">MANIFESTO</span>
                 </div>
-                <div className="text-xs font-mono text-[var(--text-muted)] space-y-2 mt-8">
-                  <p>SYS.VER: 1.0.0-PROD</p>
-                  <p>TRACK: GEMMA 4</p>
-                  <p>TARGET: ASYMMETRIC SCAM COST</p>
-                </div>
               </div>
 
               <div className="hidden md:block pt-8 border-t border-[var(--border-color)] text-xs text-[var(--text-secondary)]">
