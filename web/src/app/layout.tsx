@@ -19,9 +19,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/logo.png" />
-      </head>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>{children}</ThemeProvider>
       </body>

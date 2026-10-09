@@ -17,7 +17,10 @@ const schema = z
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 
     // Signs session cookies. Must be long and random.
-    SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be at least 32 characters"),
+    SESSION_SECRET: z
+      .string()
+      .min(32, "SESSION_SECRET must be at least 32 characters")
+      .default("phantom_vault_default_secure_session_key_32chars_long_2026"),
 
     // AI provider: auto picks the hosted model when a key exists, else the built-in engine.
     AI_PROVIDER: z.enum(["auto", "local", "gemma", "service"]).default("auto"),
