@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   // Session cookies + live data everywhere: classic dynamic rendering keeps this simple.
   cacheComponents: false,
+  experimental: {
+    cpus: 2,
+  },
   turbopack: {
     rules: {
       "*.css": {
