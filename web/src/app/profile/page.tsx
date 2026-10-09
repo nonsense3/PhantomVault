@@ -34,12 +34,31 @@ interface UserProfile {
   createdAt: string;
 }
 
+interface VaultedReportItem {
+  id: string;
+  reportId: string;
+  incidentId: string;
+  vaultedAt: string;
+  scamType: string;
+  threatLevel: string;
+  summary: string;
+  sourceIp: string;
+  geo?: any;
+  timeWastedSeconds: number;
+  turns: number;
+  trapName: string;
+  evidencePackage?: any;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [vaultedReports, setVaultedReports] = useState<VaultedReportItem[]>([]);
+  const [expandedDossierId, setExpandedDossierId] = useState<string | null>(null);
+  const [historyFilter, setHistoryFilter] = useState<"all" | "vaulted">("all");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -74,6 +93,9 @@ export default function ProfilePage() {
           }
           if (incData?.incidents) {
             setIncidents(incData.incidents);
+          }
+          if (incData?.vaultedReports) {
+            setVaultedReports(incData.vaultedReports);
           }
         }
       } catch (err) {
@@ -383,7 +405,7 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-2">
                 <div className="p-5 border border-[var(--border-color)] bg-[var(--bg-primary)] space-y-1">
                   <span className="grid-sidebar-label block">ACTIVE HONEYPOTS</span>
                   <div className="text-3xl font-extrabold font-mono text-[var(--text-primary)]">
@@ -423,7 +445,141 @@ export default function ProfilePage() {
                     FORENSIC EVIDENCE
                   </span>
                 </div>
+
+                <div className="p-5 border border-emerald-500/40 bg-emerald-500/5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="grid-sidebar-label text-emerald-600 dark:text-emerald-400 block">CLOUD VAULT</span>
+                    <CloudUpload className="w-3.5 h-3.5 text-emerald-500" />
+                  </div>
+                  <div className="text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+                    {vaultedReports.length}
+                  </div>
+                  <span className="text-[10px] font-mono text-[var(--text-muted)] block">
+                    SUPABASE ARCHIVED
+                  </span>
+                </div>
               </div>
+            </div>
+
+            {/* Cloud Vault Evidence Repository (Supabase Sync) */}
+            <div className="border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 sm:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-color)] pb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CloudUpload className="w-4 h-4 text-[var(--accent-cobalt)]" />
+                    <span className="grid-sidebar-label">SUPABASE CLOUD VAULT REPOSITORY</span>
+                  </div>
+                  <h3 className="text-xl font-extrabold uppercase tracking-tight">
+                    CLOUD-VAULTED ATTACK EVIDENCE DOSSIERS ({vaultedReports.length})
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">
+                    Cryptographically sealed forensic incident dossiers uploaded and archived to Supabase PostgreSQL cloud storage with Row Level Security.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-1 font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    RLS SECURED
+                  </span>
+                </div>
+              </div>
+
+              {vaultedReports.length === 0 ? (
+                <div className="p-8 border border-[var(--border-color)] bg-[var(--bg-primary)] text-center space-y-3 font-mono text-xs text-[var(--text-muted)]">
+                  <CloudUpload className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2 opacity-50" />
+                  <p className="font-bold text-[var(--text-primary)]">NO EVIDENCE PACKAGES VAULTED TO SUPABASE YET.</p>
+                  <p className="text-[11px] text-[var(--text-secondary)] max-w-lg mx-auto leading-relaxed">
+                    When inspecting an incident in the Operations Console, click <strong className="text-[var(--text-primary)]">&quot;Vault to Cloud (Supabase)&quot;</strong> to upload and synchronize a permanent, tamper-proof forensic evidence package to your private cloud storage.
+                  </p>
+                  <Link href="/dashboard" className="poster-btn poster-btn-sm inline-flex mt-2">
+                    View Live Operations Console →
+                  </Link>
+                </div>
+              ) : (
+                <div className="border border-[var(--border-color)] bg-[var(--bg-primary)] divide-y divide-[var(--border-color)]">
+                  {vaultedReports.map((report) => (
+                    <div key={report.id || report.reportId} className="p-5 space-y-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono font-bold text-xs bg-[var(--accent-cobalt)]/10 text-[var(--accent-cobalt)] border border-[var(--accent-cobalt)]/30 px-2 py-0.5">
+                              {report.reportId}
+                            </span>
+                            <span className="font-extrabold text-sm uppercase tracking-tight">
+                              {report.scamType} — {report.trapName}
+                            </span>
+                            <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 font-bold flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              STORED IN SUPABASE
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-[var(--text-secondary)] font-mono max-w-2xl line-clamp-1">
+                            {report.summary}
+                          </p>
+
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-[var(--text-muted)] pt-0.5">
+                            <span>TARGET IP: <strong className="text-[var(--text-primary)]">{report.sourceIp}</strong></span>
+                            <span>•</span>
+                            <span>GEO: {report.geo?.city || "Unknown"}, {report.geo?.country || "Proxy/VPN"}</span>
+                            <span>•</span>
+                            <span>TIME WASTED: <strong className="text-[var(--accent-cobalt)]">{formatDuration(report.timeWastedSeconds)}</strong></span>
+                            <span>•</span>
+                            <span>TURNS: {report.turns}</span>
+                            <span>•</span>
+                            <span>VAULTED: {new Date(report.vaultedAt).toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {report.evidencePackage && (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedDossierId(expandedDossierId === report.id ? null : report.id)}
+                              className="p-2 border border-[var(--border-color)] hover:border-[var(--border-strong)] text-xs font-mono flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                              title="Toggle raw evidence JSON preview"
+                            >
+                              <span>{expandedDossierId === report.id ? "Hide Dossier" : "View Dossier"}</span>
+                            </button>
+                          )}
+                          {report.incidentId && (
+                            <a
+                              href={`/api/incidents/${report.incidentId}/export`}
+                              download
+                              className="p-2 border border-[var(--border-color)] hover:border-[var(--border-strong)] text-xs font-mono flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                              title="Download complete JSON evidence dossier"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">JSON</span>
+                            </a>
+                          )}
+                          {report.incidentId && (
+                            <Link
+                              href={`/incidents/${report.incidentId}`}
+                              className="poster-btn poster-btn-sm"
+                            >
+                              <span>Inspect →</span>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Expanded Raw Dossier Viewer */}
+                      {expandedDossierId === report.id && report.evidencePackage && (
+                        <div className="mt-3 p-4 border border-[var(--border-color)] bg-black/90 text-emerald-400 font-mono text-[11px] overflow-x-auto max-h-72">
+                          <div className="flex items-center justify-between pb-2 mb-2 border-b border-emerald-900/50 text-[10px] text-emerald-500 uppercase">
+                            <span>AUTHENTICATED SUPABASE CLOUD DOSSIER // {report.reportId}</span>
+                            <span>VERSION: {report.evidencePackage.version || "1.0"}</span>
+                          </div>
+                          <pre className="whitespace-pre-wrap">
+                            {JSON.stringify(report.evidencePackage, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Attack & Incident Forensic History (PRD TI & Profile) */}
@@ -439,7 +595,29 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Link href="/dashboard" className="poster-btn poster-btn-sm">
+                  <button
+                    type="button"
+                    onClick={() => setHistoryFilter("all")}
+                    className={`px-3 py-1.5 text-xs font-mono font-bold border transition-colors ${
+                      historyFilter === "all"
+                        ? "border-[var(--accent-cobalt)] bg-[var(--accent-cobalt)] text-white"
+                        : "border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    ALL ({incidents.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHistoryFilter("vaulted")}
+                    className={`px-3 py-1.5 text-xs font-mono font-bold border transition-colors ${
+                      historyFilter === "vaulted"
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : "border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    VAULTED ({incidents.filter((i) => i.summary?.includes("[VAULTED TO CLOUD")).length})
+                  </button>
+                  <Link href="/dashboard" className="poster-btn poster-btn-sm ml-2">
                     <span>Live Dashboard →</span>
                   </Link>
                 </div>
@@ -458,7 +636,10 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="border border-[var(--border-color)] bg-[var(--bg-primary)] divide-y divide-[var(--border-color)]">
-                  {incidents.map((inc) => {
+                  {(historyFilter === "vaulted"
+                    ? incidents.filter((i) => i.summary?.includes("[VAULTED TO CLOUD"))
+                    : incidents
+                  ).map((inc) => {
                     const isVaulted = inc.summary?.includes("[VAULTED TO CLOUD");
                     return (
                       <div

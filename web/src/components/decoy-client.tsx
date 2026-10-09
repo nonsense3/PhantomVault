@@ -66,6 +66,41 @@ export function DecoyClient({
   const [abuseSubmitted, setAbuseSubmitted] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sessionStartRef = useRef<number>(Date.now());
+
+  // Trap network session tracking & heartbeat
+  useEffect(() => {
+    sessionStartRef.current = Date.now();
+
+    const sendHeartbeat = (action?: string) => {
+      const elapsed = Math.max(0, Math.floor((Date.now() - sessionStartRef.current) / 1000));
+      fetch(`/api/t/${slug}/heartbeat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientElapsedSeconds: elapsed,
+          lastAction: action || "Active session on trap network",
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    // Heartbeat every 4 seconds to record intruder time waste in real-time
+    const heartbeatInterval = setInterval(() => {
+      sendHeartbeat();
+    }, 4000);
+
+    const handleVisibilityChange = () => {
+      sendHeartbeat(document.visibilityState === "hidden" ? "Tab paused/background" : "Tab focused/active");
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(heartbeatInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      sendHeartbeat("Session ended / Navigated away");
+    };
+  }, [slug]);
 
   useEffect(() => {
     // Initialize session
@@ -100,11 +135,16 @@ export function DecoyClient({
     setLoading(true);
     setTyping(true);
 
+    const elapsed = Math.max(0, Math.floor((Date.now() - sessionStartRef.current) / 1000));
+
     try {
       const res = await fetch(`/api/t/${slug}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          message: text,
+          clientElapsedSeconds: elapsed,
+        }),
       });
 
       const data = await res.json();
@@ -126,6 +166,8 @@ export function DecoyClient({
 
   const submitPortalEvent = async (step: "login" | "otp" | "security" | "transfer", data: Record<string, string>) => {
     setLoading(true);
+    const elapsed = Math.max(0, Math.floor((Date.now() - sessionStartRef.current) / 1000));
+
     try {
       const res = await fetch(`/api/t/${slug}/submit`, {
         method: "POST",
@@ -133,6 +175,7 @@ export function DecoyClient({
         body: JSON.stringify({
           portalEvent: { step, data },
           attempts,
+          clientElapsedSeconds: elapsed,
         }),
       });
 

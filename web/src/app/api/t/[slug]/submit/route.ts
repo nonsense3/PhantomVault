@@ -62,6 +62,19 @@ export async function POST(
 
     const body = await req.json();
 
+    // Accurately compute session elapsed time on the trap network
+    const nowIso = new Date().toISOString();
+    const startedAtMs = new Date(incident.startedAt).getTime();
+    const serverSessionElapsed = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+    const clientElapsed = typeof body.clientElapsedSeconds === "number" ? body.clientElapsedSeconds : 0;
+    const currentSessionWasted = Math.max(incident.timeWastedSeconds, serverSessionElapsed, clientElapsed);
+
+    await updateIncident(trap.ownerId, incident.id, {
+      timeWastedSeconds: currentSessionWasted,
+      lastActivityAt: nowIso,
+      status: "active",
+    });
+
     // Check if this is a portal event (e.g. login form, OTP form) or conversation message
     if (body.portalEvent) {
       const pe = body.portalEvent as PortalEvent;

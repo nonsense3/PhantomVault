@@ -556,15 +556,17 @@ export async function createMessage(params: {
     throw new Error(error?.message || "Failed to create message");
   }
 
-  // Update incident last_activity_at and time_wasted_seconds
-  const timeBonus = params.role === "attacker" ? Math.floor(25 + Math.random() * 40) : 0;
+  // Update incident last_activity_at and time_wasted_seconds based on trap session
   const { data: inc } = await admin
     .from("incidents")
-    .select("time_wasted_seconds, trap_id")
+    .select("time_wasted_seconds, trap_id, started_at")
     .eq("id", params.incidentId)
     .maybeSingle();
 
-  const updatedTime = (inc?.time_wasted_seconds || 0) + timeBonus;
+  const startedAtMs = inc?.started_at ? new Date(inc.started_at).getTime() : Date.now();
+  const sessionElapsed = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+  const attackerStepBonus = params.role === "attacker" ? 15 : 0;
+  const updatedTime = Math.max((inc?.time_wasted_seconds || 0) + attackerStepBonus, sessionElapsed);
 
   await admin
     .from("incidents")

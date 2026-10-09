@@ -177,19 +177,19 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
       {/* INCIDENT TOP HEADER (Strict Grid)                               */}
       {/* =============================================================== */}
       <div className="border-b border-[var(--border-color)] bg-[var(--bg-surface)] p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5">
+          <div className="flex items-center gap-4 min-w-0">
             <Link
               href="/dashboard"
-              className="p-2 border border-[var(--border-color)] hover:border-[var(--border-strong)] transition-colors"
+              className="p-2.5 border border-[var(--border-color)] hover:border-[var(--border-strong)] transition-colors shrink-0"
               title="Back to dashboard"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div>
-              <div className="flex items-center gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <span
-                  className={`text-[10px] font-mono font-bold px-2 py-0.5 border ${
+                  className={`text-[10px] font-mono font-bold px-2 py-0.5 border shrink-0 ${
                     incident.threatLevel === "High"
                       ? "threat-high"
                       : incident.threatLevel === "Medium"
@@ -199,12 +199,12 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
                 >
                   {incident.threatLevel || "HIGH"} THREAT
                 </span>
-                <h1 className="text-xl font-black uppercase tracking-tight">
+                <h1 className="text-lg sm:text-xl font-black uppercase tracking-tight truncate">
                   {incident.scamType || "Incoming Scam"} — {trap?.name || "Decoy"}
                 </h1>
               </div>
-              <div className="text-xs font-mono text-[var(--text-muted)] mt-1 flex flex-wrap items-center gap-3">
-                <span>TARGET IP: {incident.sourceIp}</span>
+              <div className="text-xs font-mono text-[var(--text-muted)] mt-1 flex flex-wrap items-center gap-2 sm:gap-3">
+                <span>TARGET IP: <strong className="text-[var(--text-primary)]">{incident.sourceIp}</strong></span>
                 <span>•</span>
                 <span>GEO: {incident.geo?.city || "Unknown"}, {incident.geo?.country || "Proxy/VPN"}</span>
                 <span>•</span>
@@ -213,15 +213,15 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-[var(--border-color)]">
             {/* Live Stopwatch Counter (PRD DB-5) */}
-            <div className="p-3 border border-[var(--border-color)] bg-[var(--bg-primary)] flex items-center gap-3">
-              <Clock className="w-4 h-4 text-[var(--accent-cobalt)]" />
-              <div>
-                <span className="text-[10px] uppercase font-mono text-[var(--text-muted)] block">
-                  SCAMMER TIME WASTED
+            <div className="h-10 px-3.5 border border-[var(--border-color)] bg-[var(--bg-primary)] flex items-center gap-2.5 shrink-0">
+              <Clock className="w-4 h-4 text-[var(--accent-cobalt)] shrink-0" />
+              <div className="flex items-center gap-2 font-mono">
+                <span className="text-[9px] uppercase text-[var(--text-muted)] tracking-wider">
+                  TIME WASTED:
                 </span>
-                <span className="font-mono font-bold text-lg text-[var(--accent-cobalt)]">
+                <span className="font-bold text-sm text-[var(--accent-cobalt)] tracking-tight">
                   {formatClock(secondsWasted)}
                 </span>
               </div>
@@ -230,27 +230,27 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
             <button
               onClick={handleSimulate}
               disabled={simulating}
-              className="poster-btn-secondary poster-btn-sm"
+              className="h-10 px-3.5 poster-btn-secondary poster-btn-sm flex items-center gap-2 whitespace-nowrap text-xs"
               title="Trigger simulated scammer turn for live demo"
             >
-              <Radio className="w-3.5 h-3.5 text-red-500 animate-pulse" />
-              <span>{simulating ? "Simulating..." : "Simulate Scammer Turn"}</span>
+              <Radio className="w-3.5 h-3.5 text-red-500 animate-pulse shrink-0" />
+              <span>{simulating ? "Simulating..." : "Simulate Turn"}</span>
             </button>
 
             <a
               href={`/api/incidents/${incident.id}/export`}
               download
-              className="poster-btn-secondary poster-btn-sm"
+              className="h-10 px-3.5 poster-btn-secondary poster-btn-sm flex items-center gap-2 whitespace-nowrap text-xs"
               title="Download raw JSON evidence dossier to disk"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download Evidence (JSON)</span>
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              <span>Download JSON</span>
             </a>
 
             <button
               onClick={handleCloudVault}
               disabled={vaulting || !!vaultedReportId}
-              className={`poster-btn poster-btn-sm ${
+              className={`h-10 px-3.5 poster-btn poster-btn-sm flex items-center gap-2 whitespace-nowrap text-xs ${
                 vaultedReportId
                   ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
                   : ""
@@ -259,13 +259,13 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
             >
               {vaultedReportId ? (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Vaulted to Cloud ({vaultedReportId})</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Vaulted ({vaultedReportId})</span>
                 </>
               ) : (
                 <>
-                  <CloudUpload className="w-3.5 h-3.5 text-[var(--accent-cobalt)]" />
-                  <span>{vaulting ? "Vaulting to Cloud..." : "Vault to Cloud (Supabase)"}</span>
+                  <CloudUpload className="w-3.5 h-3.5 text-[var(--accent-cobalt)] shrink-0" />
+                  <span>{vaulting ? "Vaulting..." : "Vault to Cloud"}</span>
                 </>
               )}
             </button>

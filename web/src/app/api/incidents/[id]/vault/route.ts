@@ -86,28 +86,33 @@ export async function POST(
     });
 
     // Also persist into analyses table as a vaulted forensic dossier
-    const admin = getSupabaseAdmin();
-    if (admin) {
-      await admin.from("analyses").insert({
-        owner_id: user.id,
-        input_type: "text",
-        result: {
-          threat_level: incident.threatLevel || "High",
-          scam_type: incident.scamType || "Incoming Interaction",
-          summary: `Cloud Vault Evidence Package for ${incident.sourceIp} (${reportId})`,
-          red_flags: [
-            `Attacker IP: ${incident.sourceIp}`,
-            `${iocs.length} Indicators of Compromise recorded`,
-            `${messages.length} transmission turns archived`,
-            `Time wasted: ${incident.timeWastedSeconds} seconds`,
-          ],
-          iocs: iocs.map((i) => ({ type: i.type, value: i.value, confidence: i.confidence })),
-          suggested_persona: trap?.persona || "gullible_senior",
-          suggested_template: trap?.template || "forward_scam",
-          suggested_opener: "Archive package",
-          evidence_dossier: evidencePackage,
-        },
-      });
+    try {
+      const admin = getSupabaseAdmin();
+      if (admin) {
+        await admin.from("analyses").insert({
+          owner_id: user.id,
+          input_type: "text",
+          result: {
+            threat_level: incident.threatLevel || "High",
+            scam_type: incident.scamType || "Incoming Interaction",
+            summary: `Cloud Vault Evidence Package for ${incident.sourceIp} (${reportId})`,
+            red_flags: [
+              `Attacker IP: ${incident.sourceIp}`,
+              `${iocs.length} Indicators of Compromise recorded`,
+              `${messages.length} transmission turns archived`,
+              `Time wasted: ${incident.timeWastedSeconds} seconds`,
+            ],
+            iocs: iocs.map((i) => ({ type: i.type, value: i.value, confidence: i.confidence })),
+            suggested_persona: trap?.persona || "gullible_senior",
+            suggested_template: trap?.template || "forward_scam",
+            suggested_opener: "Archive package",
+            evidence_dossier: evidencePackage,
+            evidenceDossier: evidencePackage,
+          },
+        });
+      }
+    } catch (dossierErr) {
+      console.warn("Evidence dossier archive notice:", dossierErr);
     }
 
     return NextResponse.json({
