@@ -14,14 +14,14 @@
   <a href="#-gemma-4-core-capabilities"><img src="https://img.shields.io/badge/Powered_by-Gemma_4-4285F4?style=for-the-badge&logo=google" alt="Powered by Gemma 4" /></a>
   <a href="#-design-system-reality-first-poster-modernism"><img src="https://img.shields.io/badge/Design-Reality--First_Modernism-1351AA?style=for-the-badge" alt="Design" /></a>
   <a href="#-quick-start-running-locally"><img src="https://img.shields.io/badge/Next.js-15_Turbopack-000000?style=for-the-badge&logo=nextdotjs" alt="Next.js" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License: MIT" /></a>
 </p>
 
 ---
 
 > **Track:** Gemma 4  
-> **Version:** 1.0 (Hackathon MVP)  
-> **Author / Owner:** Ankit Dey  
-> **One-Line Pitch:** *Forward a scam, and let AI waste the scammer's time while you collect the evidence.*
+> **Version:** 1.0 (Hackathon MVP)   
+> *Forward a scam, and let AI waste the scammer's time while you collect the evidence.*
 
 ---
 
@@ -238,6 +238,6 @@ PhantomVault/
 
 ---
 
-<p align="center">
-  <sub>Built for the Google Gemma 4 Hackathon • Reality-First Security • 2026</sub>
-</p>
+## 8. License
+
+This project is open-source and licensed under the [MIT License](LICENSE).
