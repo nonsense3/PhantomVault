@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: phantom-vault
+    runtime: node
+    plan: free
+    rootDir: web
+    buildCommand: npm install && npm run build
+    startCommand: npm start -- -H 0.0.0.0
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: AI_PROVIDER
+        value: auto
