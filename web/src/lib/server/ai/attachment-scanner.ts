@@ -414,52 +414,65 @@ export function scanAttachment(input: AttachmentScanInput): {
     threatLevel = "Low";
   }
 
+  const isClean = verdict === "CLEAN" || threatLevel === "Low";
+
   const doNotDownloadWarning =
     threatLevel === "High"
       ? "⛔ CRITICAL SECURITY DIRECTIVE: DO NOT DOWNLOAD OR EXECUTE THIS ATTACHMENT ON YOUR WORKSTATION. Static inspection identified weaponized indicators and exploit triggers. Downloading or opening this file locally will compromise your machine."
       : threatLevel === "Medium"
       ? "⚠️ ELEVATED RISK WARNING: QUARANTINE THIS ATTACHMENT. DO NOT OPEN LOCALLY. The file exhibits evasive container attributes or macro capabilities commonly used in phishing attacks."
-      : "ℹ️ ADVISORY: Always verify email attachment senders out-of-band before downloading or opening unfamiliar files.";
+      : "✓ VERIFIED SAFE: Forensic bytecode inspection detected no malicious payloads, weaponized macros, or deceptive masquerading. File passed security checks.";
 
-  const quarantineProtocols = [
-    "QUARANTINE IMMEDIATELY: Do NOT save to your local hard drive, extract from archives, or run the file.",
-    "PURGE EMAIL: Delete the incoming phishing email from your inbox and permanently empty it from your trash.",
-    "NEVER BYPASS GUARDS: Do NOT click 'Enable Editing', 'Enable Content', or disable Windows SmartScreen.",
-    "NOTIFY IT/SOC: Report the sender's address, subject line, and the SHA-256 hash below to your security team.",
-    "DEPLOY HONEYPOT DECOY: Use Phantom Vault below to turn this threat into an interactive decoy trap and bait the attacker.",
-  ];
+  const quarantineProtocols = isClean
+    ? [
+        "FILE INTEGRITY VERIFIED: In-memory bytecode analysis found no known exploit signatures or malware droppers.",
+        "STRUCTURE INTEGRITY: File extension and byte headers match without deceptive double extensions.",
+        "NO THREAT DETECTED: This attachment or link appears clean and safe to access.",
+      ]
+    : [
+        "QUARANTINE IMMEDIATELY: Do NOT save to your local hard drive, extract from archives, or run the file.",
+        "PURGE EMAIL: Delete the incoming phishing email from your inbox and permanently empty it from your trash.",
+        "NEVER BYPASS GUARDS: Do NOT click 'Enable Editing', 'Enable Content', or disable Windows SmartScreen.",
+        "NOTIFY IT/SOC: Report the sender's address, subject line, and the SHA-256 hash below to your security team.",
+        "DEPLOY HONEYPOT DECOY: Use Phantom Vault below to turn this threat into an interactive decoy trap and bait the attacker.",
+      ];
 
   // Determine scam type & decoy suggestions
-  let scamType = "Malicious Email Attachment";
-  let suggestedTemplate: TemplateId = "invoice_shield";
-  let suggestedPersona: PersonaId = "angry_executive";
+  let scamType = "Safe File / Clean Attachment";
+  let suggestedTemplate: TemplateId = "forward_scam";
+  let suggestedPersona: PersonaId = "gullible_senior";
 
-  if (/invoice|receipt|payment|bill|remittance|balance/i.test(lowerName)) {
-    scamType = "Fake Invoice Attachment Trojan";
-    suggestedTemplate = "invoice_shield";
-    suggestedPersona = "angry_executive";
-  } else if (/login|verify|account|security|password|auth|statement/i.test(lowerName)) {
-    scamType = "Credential Harvester Attachment";
-    suggestedTemplate = "fake_login";
-    suggestedPersona = "gullible_senior";
-  } else {
-    scamType = isDoubleExtension ? "Double-Extension Malware Dropper" : "Suspicious Email Payload";
-    suggestedTemplate = "forward_scam";
-    suggestedPersona = "distracted_freelancer";
+  if (threatLevel === "High" || threatLevel === "Medium") {
+    if (/invoice|receipt|payment|bill|remittance|balance/i.test(lowerName)) {
+      scamType = "Fake Invoice Attachment Trojan";
+      suggestedTemplate = "invoice_shield";
+      suggestedPersona = "angry_executive";
+    } else if (/login|verify|account|security|password|auth|statement/i.test(lowerName)) {
+      scamType = "Credential Harvester Attachment";
+      suggestedTemplate = "fake_login";
+      suggestedPersona = "gullible_senior";
+    } else {
+      scamType = isDoubleExtension ? "Double-Extension Malware Dropper" : "Suspicious Email Payload";
+      suggestedTemplate = "forward_scam";
+      suggestedPersona = "distracted_freelancer";
+    }
   }
 
-  const suggestedOpener =
-    suggestedPersona === "angry_executive"
-      ? `I received your email with the attachment "${fileName}". Our corporate gateway blocked the download for security compliance. State your outstanding balance and remit instructions directly.`
-      : suggestedPersona === "gullible_senior"
-      ? `Hello dear, I got your email with "${fileName}", but my computer gave me a big red warning when I tried to open it. Can you tell me what is inside or give me a link to see it?`
-      : `Hey, saw your email with "${fileName}". My antivirus quarantined it automatically and won't let me open it. What did you need from me?`;
+  const suggestedOpener = isClean
+    ? "No decoy required for safe/clean attachments."
+    : suggestedPersona === "angry_executive"
+    ? `I received your email with the attachment "${fileName}". Our corporate gateway blocked the download for security compliance. State your outstanding balance and remit instructions directly.`
+    : suggestedPersona === "gullible_senior"
+    ? `Hello dear, I got your email with "${fileName}", but my computer gave me a big red warning when I tried to open it. Can you tell me what is inside or give me a link to see it?`
+    : `Hey, saw your email with "${fileName}". My antivirus quarantined it automatically and won't let me open it. What did you need from me?`;
 
-  const summary = `Static attachment analysis of "${fileName}" (${formatBytes(finalSize)}) classified as ${threatLevel.toUpperCase()} THREAT (${verdict}). ${
-    vulnerabilities.length > 0
-      ? `Identified ${vulnerabilities.length} active vulnerability / exploitation indicators: ${vulnerabilities.map((v) => v.id).join(", ")}.`
-      : `No known active exploit signatures, but strict quarantine is advised for external email attachments.`
-  } DO NOT download or execute this file locally.`;
+  const summary = isClean
+    ? `Forensic attachment inspection of "${fileName}" (${formatBytes(finalSize)}) classified as LOW THREAT (CLEAN). Zero exploit primitives or deceptive patterns detected. File appears safe.`
+    : `Static attachment analysis of "${fileName}" (${formatBytes(finalSize)}) classified as ${threatLevel.toUpperCase()} THREAT (${verdict}). ${
+        vulnerabilities.length > 0
+          ? `Identified ${vulnerabilities.length} active vulnerability / exploitation indicators: ${vulnerabilities.map((v) => v.id).join(", ")}.`
+          : `Strict quarantine is advised for external email attachments.`
+      } DO NOT download or execute this file locally.`;
 
   const scanDetails: AttachmentScanDetails = {
     fileName,
@@ -486,8 +499,8 @@ export function scanAttachment(input: AttachmentScanInput): {
     threat_level: threatLevel,
     scam_type: scamType,
     summary,
-    red_flags: redFlags.length > 0 ? redFlags : ["External untrusted attachment"],
-    iocs: extractedIocs.slice(0, 8).map((i) => ({
+    red_flags: isClean ? [] : (redFlags.length > 0 ? redFlags : ["External untrusted attachment"]),
+    iocs: isClean ? [] : extractedIocs.slice(0, 8).map((i) => ({
       type: (i.type === "url" || i.type === "domain" || i.type === "email" || i.type === "ip" || i.type === "wallet" || i.type === "bank" ? i.type : "domain") as IocType,
       value: i.value,
       confidence: i.confidence,

@@ -841,37 +841,69 @@ export default function AnalyzerPage() {
                 </div>
               </div>
 
-              {/* HIGH VISIBILITY DO NOT DOWNLOAD DIRECTIVE FOR ATTACHMENTS */}
+              {/* DIRECTIVE FOR ATTACHMENTS (CLEAN vs MALICIOUS) */}
               {result.attachment_scan && (
-                <div className="border-2 border-rose-500 bg-rose-500/10 p-5 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <ShieldX className="w-7 h-7 text-rose-500 flex-shrink-0 mt-0.5 animate-pulse" />
-                    <div>
-                      <div className="text-sm sm:text-base font-black text-rose-500 uppercase tracking-wide font-mono">
-                        {result.attachment_scan.verdict === "MALICIOUS"
-                          ? "⛔ CRITICAL DIRECTIVE: DO NOT DOWNLOAD OR EXECUTE THIS FILE LOCALLY"
-                          : "⚠️ CAUTION: SUSPICIOUS ATTACHMENT QUARANTINE DIRECTIVE"}
+                result.threat_level === "Low" || result.attachment_scan.verdict === "CLEAN" ? (
+                  <div className="border-2 border-emerald-500/50 bg-emerald-500/10 p-5 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-7 h-7 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-sm sm:text-base font-black text-emerald-500 uppercase tracking-wide font-mono">
+                          ✓ VERIFIED SAFE: NO EXPLOITS OR PHISHING MALWARE DETECTED
+                        </div>
+                        <p className="text-xs text-[var(--text-primary)] mt-1 font-mono font-medium leading-relaxed">
+                          {result.attachment_scan.doNotDownloadWarning}
+                        </p>
                       </div>
-                      <p className="text-xs text-[var(--text-primary)] mt-1 font-mono font-medium leading-relaxed">
-                        {result.attachment_scan.doNotDownloadWarning}
-                      </p>
+                    </div>
+
+                    {result.attachment_scan.quarantineProtocols.length > 0 && (
+                      <div className="border-t border-emerald-500/30 pt-3">
+                        <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider block mb-2">
+                          VERIFICATION CLEARANCE PROTOCOLS
+                        </span>
+                        <ul className="space-y-1.5">
+                          {result.attachment_scan.quarantineProtocols.map((protocol, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-xs font-mono text-[var(--text-secondary)]">
+                              <span className="text-emerald-500 font-bold">•</span>
+                              <span>{protocol}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="border-2 border-rose-500 bg-rose-500/10 p-5 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <ShieldX className="w-7 h-7 text-rose-500 flex-shrink-0 mt-0.5 animate-pulse" />
+                      <div>
+                        <div className="text-sm sm:text-base font-black text-rose-500 uppercase tracking-wide font-mono">
+                          {result.attachment_scan.verdict === "MALICIOUS"
+                            ? "⛔ CRITICAL DIRECTIVE: DO NOT DOWNLOAD OR EXECUTE THIS FILE LOCALLY"
+                            : "⚠️ CAUTION: SUSPICIOUS ATTACHMENT QUARANTINE DIRECTIVE"}
+                        </div>
+                        <p className="text-xs text-[var(--text-primary)] mt-1 font-mono font-medium leading-relaxed">
+                          {result.attachment_scan.doNotDownloadWarning}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-rose-500/30 pt-3">
+                      <span className="text-[10px] font-mono font-bold text-rose-400 uppercase tracking-wider block mb-2">
+                        MANDATORY QUARANTINE PROTOCOLS (NO LOCAL DOWNLOAD)
+                      </span>
+                      <ul className="space-y-1.5">
+                        {result.attachment_scan.quarantineProtocols.map((protocol, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs font-mono text-[var(--text-secondary)]">
+                            <span className="text-rose-500 font-bold">•</span>
+                            <span>{protocol}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-
-                  <div className="border-t border-rose-500/30 pt-3">
-                    <span className="text-[10px] font-mono font-bold text-rose-400 uppercase tracking-wider block mb-2">
-                      MANDATORY QUARANTINE PROTOCOLS (NO LOCAL DOWNLOAD)
-                    </span>
-                    <ul className="space-y-1.5">
-                      {result.attachment_scan.quarantineProtocols.map((protocol, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs font-mono text-[var(--text-secondary)]">
-                          <span className="text-rose-500 font-bold">•</span>
-                          <span>{protocol}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+                )
               )}
 
               {/* FORENSIC TELEMETRY CARD (If Attachment Scan) */}
@@ -881,8 +913,16 @@ export default function AnalyzerPage() {
                     <span className="grid-sidebar-label text-[var(--accent-cobalt)]">
                       CLOUD FORENSIC FILE TELEMETRY
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/40">
-                      RISK SCORE: {result.attachment_scan.riskScore} / 100
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 border ${
+                        result.attachment_scan.riskScore >= 70
+                          ? "bg-rose-500/20 text-rose-400 border-rose-500/40"
+                          : result.attachment_scan.riskScore >= 40
+                          ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                          : "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                      }`}
+                    >
+                      RISK SCORE: {result.attachment_scan.riskScore} / 100 ({result.attachment_scan.verdict})
                     </span>
                   </div>
 

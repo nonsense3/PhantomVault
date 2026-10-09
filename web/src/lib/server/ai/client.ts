@@ -176,15 +176,37 @@ export async function analyzeScam(input: AnalyzeInput): Promise<AnalysisResult> 
 
     try {
       const systemInstruction = `You are PhantomVault's threat intelligence analysis engine powered by Gemma 4.
-Analyze the provided email attachment threat, accompanying email message text, and forensic bytecode telemetry.
-CRITICAL SECURITY MANDATE: The user MUST NOT download or execute this attachment on their local operating system.
-Assess why this file is hazardous (e.g., double extension deception, weaponized macro dropper, PDF command launch exploit, container MOTW bypass, ransomware loader).
-Return a structured JSON object matching the requested schema.
-Assess the threat level ('High' or 'Medium'), identify the scam category, list 3-5 distinct red flags, extract technical indicators of compromise (IoCs), and formulate an executive summary that explicitly tells the user why they must strictly avoid downloading it. Suggest the best decoy persona, decoy template (invoice_shield, fake_login, or forward_scam), and opening message.`;
+Analyze the provided email attachment telemetry, accompanying email message text, and forensic bytecode data.
+
+VERIFICATION RULES:
+1. If the forensic telemetry indicates a clean/safe file (Static Risk Score <= 30, verdict is CLEAN, zero vulnerabilities):
+   - Set "threat_level": "Low"
+   - Set "scam_type": "Safe File / Clean Attachment"
+   - Set "summary": "Forensic analysis verified that this file/link is clean. In-memory bytecode inspection found no known exploit signatures, macro droppers, or deceptive masquerading."
+   - Set "red_flags": []
+   - Set "suggested_opener": "No decoy required for safe attachments."
+
+2. If the attachment is malicious or suspicious (e.g. double extension deception, weaponized macro dropper, PDF command launch exploit, container MOTW bypass, ransomware loader, or Static Risk Score >= 40):
+   - Set "threat_level": "High" or "Medium"
+   - Specify the exact scam category (e.g. "Double Extension Trojan", "VBA Macro Dropper", "Fake Invoice Attachment Trojan")
+   - Detail 3-5 specific observed red flags
+   - Formulate an executive summary explaining why downloading must be avoided
+   - Recommend the best decoy persona and opener
+
+Output ONLY a valid JSON object matching this schema:
+{
+  "threat_level": "Low" | "Medium" | "High",
+  "scam_type": string,
+  "summary": string,
+  "red_flags": string[],
+  "suggested_persona": "gullible_senior" | "angry_executive" | "distracted_freelancer",
+  "suggested_template": "invoice_shield" | "fake_login" | "forward_scam",
+  "suggested_opener": string
+}`;
 
       const parts: GeminiContentPart[] = [];
       const textContent = [
-        `SUSPICIOUS ATTACHMENT TELEMETRY:`,
+        `ATTACHMENT TELEMETRY:`,
         `File Name: ${scanDetails.fileName}`,
         `File Size: ${scanDetails.formattedSize}`,
         `Detected File Type: ${scanDetails.fileType}`,
@@ -193,77 +215,83 @@ Assess the threat level ('High' or 'Medium'), identify the scam category, list 3
         `Static Risk Score: ${scanDetails.riskScore}/100 (${scanDetails.verdict})`,
         scanDetails.vulnerabilities.length > 0
           ? `Detected Vulnerabilities & Exploit Primitives:\n${scanDetails.vulnerabilities.map((v) => `- [${v.severity}] ${v.id} (${v.title}): ${v.description}`).join("\n")}`
-          : "",
+          : "Vulnerabilities: None detected (Clean)",
         scanDetails.detectedTriggers.length > 0
           ? `Extracted Triggers / Indicators: ${scanDetails.detectedTriggers.join(", ")}`
-          : "",
+          : "Triggers: None detected",
         input.text ? `Accompanying Email Text / Context:\n"""\n${input.text}\n"""` : "",
         input.url ? `Attachment Download / Origin URL: ${input.url}` : "",
-        `Analyze this email attachment threat using Gemma 4 intelligence and output structured JSON.`,
+        `Analyze this email attachment using Gemma 4 intelligence and output structured JSON.`,
       ]
         .filter(Boolean)
         .join("\n\n");
 
       parts.push({ text: textContent });
 
-      const schema = {
-        type: "OBJECT",
-        properties: {
-          threat_level: { type: "STRING", enum: ["Low", "Medium", "High"] },
-          scam_type: { type: "STRING" },
-          summary: { type: "STRING" },
-          red_flags: { type: "ARRAY", items: { type: "STRING" } },
-          suggested_persona: {
-            type: "STRING",
-            enum: ["gullible_senior", "angry_executive", "distracted_freelancer"],
-          },
-          suggested_template: {
-            type: "STRING",
-            enum: ["invoice_shield", "fake_login", "forward_scam"],
-          },
-          suggested_opener: { type: "STRING" },
-        },
-        required: [
-          "threat_level",
-          "scam_type",
-          "summary",
-          "red_flags",
-          "suggested_persona",
-          "suggested_template",
-          "suggested_opener",
-        ],
-      };
-
-      const raw = await callGemmaRaw([{ role: "user", parts }], systemInstruction, schema);
+      const raw = await callGemmaRaw([{ role: "user", parts }], systemInstruction);
       const parsed = extractCleanJson<Partial<AnalysisResult>>(raw);
 
-      // Merge Gemma 4 results with static telemetry
-      const deterministicIocs = extractIocs(
-        `${input.text || ""} ${input.url || ""} ${parsed.summary || ""} ${scanDetails.sha256}`
-      );
-
-      const mergedRedFlags = Array.from(
-        new Set([
-          ...(staticResult.red_flags || []),
-          ...(Array.isArray(parsed.red_flags) ? parsed.red_flags : []),
-        ])
-      ).slice(0, 8);
+      const isClean =
+        (parsed.threat_level === "Low" || staticResult.threat_level === "Low") &&
+        scanDetails.riskScore < 40 &&
+        scanDetails.vulnerabilities.length === 0;
 
       const mergedThreat: ThreatLevel =
         scanDetails.riskScore >= 70 || staticResult.threat_level === "High"
           ? "High"
+          : isClean
+          ? "Low"
           : (parsed.threat_level as ThreatLevel) || staticResult.threat_level;
+
+      const finalIsClean = mergedThreat === "Low";
+
+      // Merge Gemma 4 results with static telemetry
+      const deterministicIocs = finalIsClean
+        ? []
+        : extractIocs(
+            `${input.text || ""} ${input.url || ""} ${parsed.summary || ""} ${scanDetails.sha256}`
+          );
+
+      const mergedRedFlags = finalIsClean
+        ? []
+        : Array.from(
+            new Set([
+              ...(staticResult.red_flags || []),
+              ...(Array.isArray(parsed.red_flags) ? parsed.red_flags : []),
+            ])
+          ).slice(0, 8);
 
       return {
         threat_level: mergedThreat,
-        scam_type: parsed.scam_type || staticResult.scam_type,
-        summary: parsed.summary ? `${parsed.summary} (DO NOT download or execute locally on your computer.)` : staticResult.summary,
+        scam_type: finalIsClean
+          ? "Safe File / Clean Attachment"
+          : parsed.scam_type || staticResult.scam_type,
+        summary: finalIsClean
+          ? (parsed.summary || staticResult.summary)
+          : parsed.summary
+          ? `${parsed.summary} (DO NOT download or execute locally on your computer.)`
+          : staticResult.summary,
         red_flags: mergedRedFlags,
         iocs: deterministicIocs.map((i) => ({ type: i.type, value: i.value, confidence: i.confidence })),
         suggested_persona: parsed.suggested_persona || staticResult.suggested_persona,
         suggested_template: parsed.suggested_template || staticResult.suggested_template,
-        suggested_opener: parsed.suggested_opener || staticResult.suggested_opener,
-        attachment_scan: scanDetails,
+        suggested_opener: finalIsClean
+          ? "No decoy required for safe attachments."
+          : parsed.suggested_opener || staticResult.suggested_opener,
+        attachment_scan: {
+          ...scanDetails,
+          verdict: finalIsClean ? "CLEAN" : scanDetails.verdict,
+          doNotDownloadWarning: finalIsClean
+            ? "Verified Clean: Forensic bytecode inspection detected no malicious payloads, weaponized macros, or deceptive masquerading."
+            : scanDetails.doNotDownloadWarning,
+          quarantineProtocols: finalIsClean
+            ? [
+                "FILE VERIFIED: In-memory bytecode inspection found no known exploit signatures or malware triggers.",
+                "STRUCTURE INTEGRITY: File extension and byte headers match without deceptive double extensions.",
+                "NO THREAT DETECTED: This attachment or link appears clean and safe.",
+              ]
+            : scanDetails.quarantineProtocols,
+        },
       };
     } catch (err) {
       console.warn("[ai:client] Gemma 4 attachment analysis error, using static forensic result:", err);
