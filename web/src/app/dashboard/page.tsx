@@ -94,6 +94,28 @@ export default function DashboardPage() {
     };
   }, []);
 
+  // Live stopwatch ticking per active session in real-time
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIncidents((prev) => {
+        let changed = false;
+        const next = prev.map((inc) => {
+          if (inc.status === "active") {
+            changed = true;
+            return {
+              ...inc,
+              timeWastedSeconds: (inc.timeWastedSeconds || 0) + 1,
+            };
+          }
+          return inc;
+        });
+        return changed ? next : prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const handleCopy = (slug: string) => {
     const url = `${window.location.origin}/t/${slug}`;
     navigator.clipboard.writeText(url);
@@ -154,7 +176,7 @@ export default function DashboardPage() {
         {/* TOP STATS BAR (Strict 12-Column Grid)                           */}
         {/* =============================================================== */}
         <section className="border border-[var(--border-color)] bg-[var(--bg-surface)]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-color)]">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
             <div className="p-6">
               <span className="grid-sidebar-label block mb-2">ACTIVE DECOYS</span>
               <div className="flex items-baseline justify-between">
@@ -176,16 +198,6 @@ export default function DashboardPage() {
                 <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                   {stats.activeIncidents} ACTIVE STREAMING
                 </span>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <span className="grid-sidebar-label block mb-2">TOTAL TIME WASTED</span>
-              <div className="flex items-baseline justify-between">
-                <span className="text-4xl font-extrabold font-mono tracking-tight">
-                  {formatDuration(stats.timeWastedSeconds)}
-                </span>
-                <Clock className="w-5 h-5 text-[var(--text-muted)]" />
               </div>
             </div>
 
@@ -349,8 +361,16 @@ export default function DashboardPage() {
                         </Link>
                       </div>
 
-                      <div className="text-[var(--text-muted)] text-[11px]">
-                        {trap.incidentCount} incidents • {formatDuration(trap.timeWastedSeconds)} wasted
+                      <div className="text-[var(--text-muted)] text-[11px] font-mono">
+                        {trap.incidentCount} incidents •{" "}
+                        <span className="text-[var(--text-secondary)] font-bold">
+                          {formatDuration(
+                            incidents
+                              .filter((i) => i.trapId === trap.id)
+                              .reduce((sum, i) => sum + (i.timeWastedSeconds || 0), 0) || trap.timeWastedSeconds
+                          )}{" "}
+                          wasted
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -411,10 +431,21 @@ export default function DashboardPage() {
 
                     <div className="flex items-center justify-between text-[11px] font-mono pt-2 border-t border-[var(--border-color)] text-[var(--text-muted)]">
                       <span>IP: {inc.sourceIp}</span>
-                      <span className="text-[var(--accent-cobalt)] font-bold flex items-center gap-1">
-                        {formatDuration(inc.timeWastedSeconds)} WASTED
-                        <ArrowUpRight className="w-3 h-3" />
-                      </span>
+                      <div className="flex items-center gap-1.5 font-bold">
+                        {inc.status === "active" ? (
+                          <span className="flex items-center gap-1.5 text-emerald-500 font-mono">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-none animate-pulse" />
+                            <Clock className="w-3 h-3 text-emerald-500 animate-spin" style={{ animationDuration: "6s" }} />
+                            <span>{formatDuration(inc.timeWastedSeconds)} WASTED</span>
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1.5 text-[var(--text-muted)] font-mono">
+                            <Clock className="w-3 h-3 text-[var(--text-muted)]" />
+                            <span>{formatDuration(inc.timeWastedSeconds)} WASTED</span>
+                          </span>
+                        )}
+                        <ArrowUpRight className="w-3 h-3 text-[var(--text-muted)] group-hover:text-[var(--accent-cobalt)] transition-colors" />
+                      </div>
                     </div>
                   </Link>
                 ))
