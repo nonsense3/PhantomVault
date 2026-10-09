@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
-import { Shield, Radio, Terminal, LogOut, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 
 interface UserInfo {
   id: string;
@@ -110,19 +110,7 @@ export function Navbar() {
                 );
               })}
             </nav>
-          ) : (
-            <div className="flex items-center gap-6 text-[11px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-emerald-500 rounded-none animate-pulse" />
-                <span>SYSTEM: ONLINE</span>
-              </div>
-              <span className="text-[var(--border-color)]">|</span>
-              <div className="flex items-center gap-1.5">
-                <Radio className="w-3.5 h-3.5 text-[var(--accent-cobalt)]" />
-                <span>HONEYPOT MESH ACTIVE</span>
-              </div>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* Columns 10-12: Actions & User */}
