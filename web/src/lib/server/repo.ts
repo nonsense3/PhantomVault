@@ -741,12 +741,20 @@ export async function createAnalysis(params: {
     created_at: new Date().toISOString(),
   };
 
-  const { data, error } = await admin.from("analyses").insert(row).select().single();
+  let { data, error } = await admin.from("analyses").insert(row).select().single();
+  if (error && (error.message?.includes("input_type") || error.code === "23514")) {
+    // If the database has an older check constraint (image, text, url), fallback to 'text'
+    row.input_type = "text";
+    const retry = await admin.from("analyses").insert(row).select().single();
+    data = retry.data;
+    error = retry.error;
+  }
   if (error || !data) {
     throw new Error(error?.message || "Failed to save analysis");
   }
 
   return mapAnalysis(data);
+
 }
 
 export async function markAnalysisConverted(ownerId: string, analysisId: string, trapId: string): Promise<void> {

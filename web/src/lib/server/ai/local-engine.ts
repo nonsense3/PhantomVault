@@ -271,7 +271,13 @@ export function openerFor(persona: PersonaId, scamType: string): string {
 }
 
 export function localAnalyze(input: AnalyzeInput): AnalysisResult {
+  if (input.attachment) {
+    const { scanAttachment } = require("./attachment-scanner");
+    return scanAttachment(input.attachment).analysisResult;
+  }
+
   const text = [input.text, input.url].filter(Boolean).join("\n").trim();
+
   const flags: string[] = [];
   const typeScores = new Map<string, number>();
   let score = 0;

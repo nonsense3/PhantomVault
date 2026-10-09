@@ -113,7 +113,8 @@ create policy "Owners can view and manage their IoCs"
 create table if not exists public.analyses (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid references auth.users on delete cascade not null,
-  input_type text not null check (input_type in ('image', 'text', 'url')),
+  input_type text not null check (input_type in ('image', 'text', 'url', 'attachment')),
+
   storage_path text,
   result jsonb not null,
   converted_trap_id uuid references public.traps on delete set null,

@@ -102,11 +102,17 @@ async function callGemmaRaw(
  * Multimodal scam analysis using Gemma 4 with fallback to local engine.
  */
 export async function analyzeScam(input: AnalyzeInput): Promise<AnalysisResult> {
+  if (input.attachment) {
+    const { scanAttachment } = await import("./attachment-scanner");
+    return scanAttachment(input.attachment).analysisResult;
+  }
+
   const provider = resolvedAiProvider();
 
   if (provider === "local" || !env().GEMMA_API_KEY) {
     return localAnalyze(input);
   }
+
 
   try {
     const systemInstruction = `You are PhantomVault's threat intelligence analysis engine.

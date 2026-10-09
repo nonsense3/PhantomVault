@@ -8,7 +8,8 @@ export type IncidentStatus = "active" | "idle" | "ended";
 export type MessageRole = "attacker" | "ai" | "system";
 export type MessageKind = "text" | "form_submit" | "fake_data";
 export type IocType = "ip" | "email" | "phone" | "url" | "domain" | "wallet" | "bank";
-export type AnalysisInputType = "image" | "text" | "url";
+export type AnalysisInputType = "image" | "text" | "url" | "attachment";
+
 
 export interface Profile {
   id: string;
@@ -95,6 +96,33 @@ export interface Ioc {
   occurrences: number;
 }
 
+export interface AttachmentVulnerability {
+  id: string; // e.g. "CVE-2010-2883" or "MITRE-T1036.007"
+  title: string;
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  description: string;
+}
+
+export interface AttachmentScanDetails {
+  fileName: string;
+  fileSize: number;
+  formattedSize: string;
+  fileType: string;
+  mimeType: string;
+  sha256: string;
+  md5: string;
+  magicHeader: string;
+  isExecutable: boolean;
+  isDoubleExtension: boolean;
+  verdict: "MALICIOUS" | "SUSPICIOUS" | "CLEAN";
+  riskScore: number; // 0 - 100
+  doNotDownloadWarning: string;
+  quarantineProtocols: string[];
+  vulnerabilities: AttachmentVulnerability[];
+  detectedTriggers: string[];
+  extractedStrings?: string[];
+}
+
 export interface AnalysisResult {
   threat_level: ThreatLevel;
   scam_type: string;
@@ -104,7 +132,9 @@ export interface AnalysisResult {
   suggested_persona: PersonaId;
   suggested_template: TemplateId;
   suggested_opener: string;
+  attachment_scan?: AttachmentScanDetails;
 }
+
 
 export interface Analysis {
   id: string;

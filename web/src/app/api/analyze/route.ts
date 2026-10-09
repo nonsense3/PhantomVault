@@ -8,31 +8,39 @@ export async function POST(req: Request) {
     const user = await requireUser();
     const body = await req.json();
 
-    const { text, url, image } = body as {
+    const { text, url, image, attachment } = body as {
       text?: string;
       url?: string;
       image?: { mimeType: string; base64Data: string };
+      attachment?: { name: string; size: number; mimeType: string; base64Data?: string };
     };
 
-    if (!text && !url && !image) {
-      return NextResponse.json({ error: "Please provide a message text, a suspicious link, or an image screenshot" }, { status: 400 });
+    if (!text && !url && !image && !attachment) {
+      return NextResponse.json(
+        { error: "Please provide a message text, a suspicious link, a screenshot, or an email attachment to scan" },
+        { status: 400 }
+      );
     }
 
     const result = await analyzeScam({
       text: text?.trim(),
       url: url?.trim(),
       image,
+      attachment,
     });
 
-    const preview = text || url || (image ? "Uploaded screenshot" : "Threat analysis input");
+    const preview = attachment
+      ? `Attachment: ${attachment.name} (${(attachment.size / 1024).toFixed(1)} KB)`
+      : text || url || (image ? "Uploaded screenshot" : "Threat analysis input");
 
     const record = await createAnalysis({
       ownerId: user.id,
-      inputType: image ? "image" : url ? "url" : "text",
+      inputType: attachment ? "attachment" : image ? "image" : url ? "url" : "text",
       inputPreview: preview,
       hasImage: !!image,
       result,
     });
+
 
     return NextResponse.json({
       analysis: record,
