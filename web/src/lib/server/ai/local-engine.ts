@@ -156,7 +156,7 @@ export function localPortalStep(
       if (presetPass && enteredPass !== presetPass) {
         return {
           screen: "login",
-          notice: `Authentication rejected. The decoy portal expects the configured password (${presetPass}).`,
+          notice: "Authentication failed. The User ID or Password you entered is incorrect. Please check your credentials and try again.",
           tone: "error",
           action: "Rejected login (password mismatch against preset)",
         };

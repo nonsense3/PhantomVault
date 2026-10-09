@@ -263,14 +263,9 @@ export function DecoyClient({
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder={decoyPassword ? "Enter decoy password..." : "••••••••••••"}
+                      placeholder="••••••••••••"
                       className="w-full p-2.5 border border-zinc-300 focus:outline-none focus:border-[#0D2447]"
                     />
-                    {decoyPassword && (
-                      <span className="text-[11px] text-zinc-500 mt-1 block font-mono">
-                        Preset Decoy Password: <strong className="text-zinc-800">{decoyPassword}</strong>
-                      </span>
-                    )}
                   </div>
                   <button
                     type="submit"
@@ -279,13 +274,6 @@ export function DecoyClient({
                   >
                     {loading ? "Verifying..." : "Log In to Account"}
                   </button>
-                  <div className="p-2.5 mt-2 bg-zinc-50 border border-zinc-200 text-zinc-500 text-[11px] text-center font-mono">
-                    {decoyPassword ? (
-                      <span>DECOY HONEYPOT: Configured with preset password <strong>{decoyPassword}</strong></span>
-                    ) : (
-                      <span>HONEYPOT ACTIVE: Any email & password will be safely trapped</span>
-                    )}
-                  </div>
                 </form>
               )}
 
