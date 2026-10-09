@@ -108,16 +108,3 @@ The platform includes pre-seeded demo traps and multi-turn threat incidents:
   - Ethical abuse report modal at the footer.
 
 ---
-
-## 5. Hackathon 3-Minute Live Demo Script
-
-1. **The Hook (0:00 - 0:20):**
-   > *"Scammers target millions daily because interacting costs them nothing. PhantomVault inverts that equation by deploying autonomous digital honeypots that consume their operational time while harvesting evidence."*
-2. **Analyze a Threat (0:20 - 1:00):**
-   > Navigate to `/analyze`. Click "AML Escrow Scam" sample (or upload a screenshot). Click "Run Threat Analysis". Show Gemma 4 dissecting the threat: High risk, Advance-Fee Fraud, red flags, and extracted crypto wallet.
-3. **Deploy a Decoy in 3 Clicks (1:00 - 1:30):**
-   > Click "Turn into Decoy Trap". Select the "Angry Executive" archetype, dial the Gullibility Slider to 75% ("Very Confused"), and click "Deploy Digital Trap". Copy the public trap link.
-4. **Live Attacker Engagement (1:30 - 2:30):**
-   > Open the Incident spectator view (`/incidents/inc_live_demo_01`). Watch the split-screen stream: on the left, the attacker demands cryptocurrency; on the right, the decoy generates a fake bank receipt and test card number. Click "Simulate Scammer Turn" to watch the live SSE stream update instantly as the time-wasted stopwatch advances.
-5. **Extract Forensic Evidence (2:30 - 3:00):**
-   > Highlight the Evidence Vault tray containing the captured wallet address, email, and IP. Click "Export Evidence (JSON)" to show the formal forensic report ready for fraud submission.
