@@ -16,6 +16,8 @@ import {
   RotateCw,
   Zap,
   Lock,
+  CloudUpload,
+  CheckCircle2,
 } from "lucide-react";
 import { formatClock, formatDuration, formatTime, timeAgo } from "@/lib/format";
 import type { Incident, Ioc, LiveEvent, Message, Trap } from "@/lib/types";
@@ -29,6 +31,8 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
   const [simulating, setSimulating] = useState(false);
   const [copiedIoc, setCopiedIoc] = useState<string | null>(null);
   const [secondsWasted, setSecondsWasted] = useState(0);
+  const [vaulting, setVaulting] = useState(false);
+  const [vaultedReportId, setVaultedReportId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +46,11 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
         setMessages(data.messages || []);
         setIocs(data.iocs || []);
         setSecondsWasted(data.incident?.timeWastedSeconds || 0);
+
+        if (data.incident?.summary?.includes("[VAULTED TO CLOUD:")) {
+          const match = data.incident.summary.match(/\[VAULTED TO CLOUD:\s*([^\]]+)\]/);
+          if (match) setVaultedReportId(match[1]);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -116,6 +125,31 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
     navigator.clipboard.writeText(val);
     setCopiedIoc(val);
     setTimeout(() => setCopiedIoc(null), 2000);
+  };
+
+  const handleCloudVault = async () => {
+    setVaulting(true);
+    try {
+      const res = await fetch(`/api/incidents/${incidentId}/vault`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 401) {
+          alert("Authentication Required: Please sign in to vault this forensic evidence to your Supabase Cloud account.");
+          window.location.href = `/login?redirect=/incidents/${incidentId}`;
+          return;
+        }
+        throw new Error(data.error || "Failed to vault evidence to cloud");
+      }
+      setVaultedReportId(data.reportId || "VAULTED");
+      await fetchIncident();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to vault evidence";
+      alert(msg);
+    } finally {
+      setVaulting(false);
+    }
   };
 
   if (loading) {
@@ -206,11 +240,35 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
             <a
               href={`/api/incidents/${incident.id}/export`}
               download
-              className="poster-btn poster-btn-sm"
+              className="poster-btn-secondary poster-btn-sm"
+              title="Download raw JSON evidence dossier to disk"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Export Evidence (JSON)</span>
+              <span>Download Evidence (JSON)</span>
             </a>
+
+            <button
+              onClick={handleCloudVault}
+              disabled={vaulting || !!vaultedReportId}
+              className={`poster-btn poster-btn-sm ${
+                vaultedReportId
+                  ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
+                  : ""
+              }`}
+              title="Vault and sync full evidence dossier to Supabase Cloud (requires login)"
+            >
+              {vaultedReportId ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Vaulted to Cloud ({vaultedReportId})</span>
+                </>
+              ) : (
+                <>
+                  <CloudUpload className="w-3.5 h-3.5 text-[var(--accent-cobalt)]" />
+                  <span>{vaulting ? "Vaulting to Cloud..." : "Vault to Cloud (Supabase)"}</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>

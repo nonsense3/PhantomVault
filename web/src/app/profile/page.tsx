@@ -20,9 +20,12 @@ import {
   Fingerprint,
   Save,
   CheckCircle2,
+  Download,
+  ExternalLink,
+  CloudUpload,
 } from "lucide-react";
 import { formatDuration } from "@/lib/format";
-import type { DashboardStats } from "@/lib/types";
+import type { DashboardStats, Incident } from "@/lib/types";
 
 interface UserProfile {
   id: string;
@@ -36,6 +39,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -67,6 +71,9 @@ export default function ProfilePage() {
           const incData = await incRes.json();
           if (incData?.stats) {
             setStats(incData.stats);
+          }
+          if (incData?.incidents) {
+            setIncidents(incData.incidents);
           }
         }
       } catch (err) {
@@ -417,6 +424,110 @@ export default function ProfilePage() {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Attack & Incident Forensic History (PRD TI & Profile) */}
+            <div className="border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 sm:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-color)] pb-4">
+                <div>
+                  <span className="grid-sidebar-label block mb-1">EVIDENCE AUDIT LOG</span>
+                  <h3 className="text-xl font-extrabold uppercase tracking-tight">
+                    ATTACK & INCIDENT FORENSIC HISTORY ({incidents.length})
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">
+                    Historical adversary interactions, intercepted authentication credentials, and cloud-vaulted evidence packages.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link href="/dashboard" className="poster-btn poster-btn-sm">
+                    <span>Live Dashboard →</span>
+                  </Link>
+                </div>
+              </div>
+
+              {incidents.length === 0 ? (
+                <div className="p-8 border border-[var(--border-color)] bg-[var(--bg-primary)] text-center space-y-3 font-mono text-xs text-[var(--text-muted)]">
+                  <Fingerprint className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2 opacity-50" />
+                  <p className="font-bold text-[var(--text-primary)]">NO ATTACKS OR INCIDENTS RECORDED YET.</p>
+                  <p className="text-[11px] text-[var(--text-secondary)]">
+                    Deploy a digital honeypot target and share the link with scammers or intruders to capture threat intelligence.
+                  </p>
+                  <Link href="/traps/new" className="poster-btn poster-btn-sm inline-flex mt-2">
+                    Deploy New Decoy Now
+                  </Link>
+                </div>
+              ) : (
+                <div className="border border-[var(--border-color)] bg-[var(--bg-primary)] divide-y divide-[var(--border-color)]">
+                  {incidents.map((inc) => {
+                    const isVaulted = inc.summary?.includes("[VAULTED TO CLOUD");
+                    return (
+                      <div
+                        key={inc.id}
+                        className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`text-[10px] font-mono font-bold px-1.5 py-0.5 border ${
+                                inc.threatLevel === "High"
+                                  ? "threat-high"
+                                  : inc.threatLevel === "Medium"
+                                  ? "threat-medium"
+                                  : "threat-low"
+                              }`}
+                            >
+                              {inc.threatLevel || "HIGH"} THREAT
+                            </span>
+                            <span className="font-extrabold text-sm uppercase tracking-tight">
+                              {inc.scamType || "Incoming Interaction"}
+                            </span>
+                            {isVaulted && (
+                              <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 font-bold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                VAULTED TO SUPABASE CLOUD
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-[var(--text-secondary)] font-mono max-w-2xl line-clamp-1">
+                            {inc.summary || "Active adversary interaction recorded."}
+                          </p>
+
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-[var(--text-muted)]">
+                            <span>
+                              TARGET IP: <strong className="text-[var(--text-primary)]">{inc.sourceIp}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              TIME WASTED: <strong className="text-[var(--accent-cobalt)]">{formatDuration(inc.timeWastedSeconds)}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>LAST SEEN: {new Date(inc.lastActivityAt).toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a
+                            href={`/api/incidents/${inc.id}/export`}
+                            download
+                            className="p-2 border border-[var(--border-color)] hover:border-[var(--border-strong)] text-xs font-mono flex items-center gap-1.5 hover:text-[var(--text-primary)] text-[var(--text-secondary)]"
+                            title="Download complete JSON evidence dossier"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">JSON</span>
+                          </a>
+                          <Link
+                            href={`/incidents/${inc.id}`}
+                            className="poster-btn poster-btn-sm"
+                          >
+                            <span>Inspect Transmissions →</span>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Cryptographic Policies & Confinement Architecture */}
