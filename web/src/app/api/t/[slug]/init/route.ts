@@ -54,15 +54,17 @@ export async function POST(
         maxAge: 60 * 60 * 24 * 3, // 3 days
       });
 
-      // If there is an opener or template opener, send the initial persona greeting
-      const opener = trap.config.opener || openerFor(trap.persona, trap.config.scamType || "inquiry");
-      await createMessage({
-        incidentId: incident.id,
-        ownerId: trap.ownerId,
-        role: "ai",
-        content: opener,
-        action: "Opened the conversation",
-      });
+      // If there is an opener or template opener, send the initial persona greeting (chat templates only)
+      if (trap.template !== "fake_login") {
+        const opener = trap.config.opener || openerFor(trap.persona, trap.config.scamType || "inquiry");
+        await createMessage({
+          incidentId: incident.id,
+          ownerId: trap.ownerId,
+          role: "ai",
+          content: opener,
+          action: "Opened the conversation",
+        });
+      }
     }
 
     const messages = await listMessages(trap.ownerId, incident.id);

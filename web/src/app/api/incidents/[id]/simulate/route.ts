@@ -55,7 +55,60 @@ export async function POST(
     const priorMessages = await listMessages(user.id, incident.id);
     const attackerCount = priorMessages.filter((m) => m.role === "attacker").length;
 
-    // Pick a topic script
+    // For fake login honeypots, simulate portal credential and OTP submissions
+    if (trap.template === "fake_login") {
+      const stepIndex = attackerCount % 4;
+      let portalPayload = "";
+      const brand = trap.config.portalBrand || "Banking Portal";
+
+      if (stepIndex === 0) {
+        const fakeUser = trap.config.decoyUsername || "victim_login@netbank.in";
+        const fakePass = trap.config.decoyPassword || "SecureKey#2026";
+        portalPayload = `[CAPTURED LOGIN CREDENTIALS]\n• Username/Email: ${fakeUser}\n• Password: ${fakePass}\n• Client Auth Status: Intercepted & Honeypot Redirected`;
+      } else if (stepIndex === 1) {
+        portalPayload = `[CAPTURED 2FA / OTP CODE]\n• Submitted Code: 649201\n• Challenge: SMS-OTP Verification for ${brand}\n• Honeypot Action: Flagged invalid, forcing adversary retry`;
+      } else if (stepIndex === 2) {
+        const q = trap.config.securityQuestion || "What was your mother's maiden name?";
+        portalPayload = `[CAPTURED SECURITY CHALLENGE]\n• Question: ${q}\n• Answer: Mukherjee\n• PIN: 8392`;
+      } else {
+        const amt = trap.config.decoyBalance || "₹85,000.00";
+        portalPayload = `[CAPTURED WIRE TRANSFER INSTRUCTIONS]\n• Payee: Escrow Liquidity Node / UPI 9821049281@oksbi\n• Account / VPA: 0928192038192\n• Amount: ${amt}\n• Status: Trapped in sandbox settlement queue`;
+      }
+
+      const attackerMsg = await createMessage({
+        incidentId: incident.id,
+        ownerId: user.id,
+        role: "attacker",
+        content: portalPayload,
+        kind: "form_submit",
+      });
+
+      const iocs = extractIocs(portalPayload);
+      for (const ioc of iocs) {
+        await upsertIoc({
+          incidentId: incident.id,
+          ownerId: user.id,
+          type: ioc.type,
+          value: ioc.value,
+          confidence: ioc.confidence,
+        });
+      }
+
+      await updateIncident(user.id, incident.id, {
+        lastActivityAt: new Date().toISOString(),
+        timeWastedSeconds: incident.timeWastedSeconds + 45,
+        threatLevel: "High",
+        summary: `Captured credential submissions on honeypot: ${brand}`,
+      });
+
+      return NextResponse.json({
+        attackerMessage: attackerMsg,
+        extractedIocs: iocs,
+        engine: "honeypot_login_portal",
+      });
+    }
+
+    // Pick a topic script for chat honeypots
     const topic = incident.scamType?.toLowerCase().includes("invoice")
       ? "invoice"
       : incident.scamType?.toLowerCase().includes("bank") || incident.scamType?.toLowerCase().includes("phish")

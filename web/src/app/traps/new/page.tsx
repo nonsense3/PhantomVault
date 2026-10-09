@@ -280,9 +280,41 @@ function CreateTrapForm() {
                 type="text"
                 value={personaName}
                 onChange={(e) => setPersonaName(e.target.value)}
-                placeholder="Margaret Hollis"
+                placeholder="Ramesh Sharma"
                 className="w-full p-3.5 border border-[var(--border-color)] bg-[var(--bg-surface)] text-sm font-mono focus:outline-none focus:border-[var(--accent-cobalt)] rounded-none"
               />
+              <div className="mt-2.5">
+                <span className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1.5 font-bold">
+                  Preset Indian & Global Persona Names:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "Ramesh Sharma",
+                    "Priya Patel",
+                    "Ankit Verma",
+                    "Sunita Mukherjee",
+                    "Rajesh Iyer",
+                    "Amitabh Sen",
+                    "Deepak Joshi",
+                    "Pooja Deshmukh",
+                    "Margaret Hollis",
+                    "Richard Vance",
+                  ].map((pName) => (
+                    <button
+                      key={pName}
+                      type="button"
+                      onClick={() => setPersonaName(pName)}
+                      className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
+                        personaName === pName
+                          ? "border-[var(--accent-cobalt)] bg-[var(--accent-cobalt)]/15 text-[var(--accent-cobalt)] font-bold"
+                          : "border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                      }`}
+                    >
+                      {pName}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -325,7 +357,7 @@ function CreateTrapForm() {
             </div>
 
             {template === "fake_login" ? (
-              <div className="space-y-4 p-5 border border-[var(--border-color)] bg-[var(--bg-surface)]">
+              <div className="space-y-5 p-5 border border-[var(--border-color)] bg-[var(--bg-surface)]">
                 {/* Brand / Institution Name */}
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider block mb-2" htmlFor="portal-brand">
@@ -336,24 +368,69 @@ function CreateTrapForm() {
                     type="text"
                     value={portalBrand}
                     onChange={(e) => setPortalBrand(e.target.value)}
-                    placeholder="e.g. Northwind Secure Bank"
+                    placeholder="e.g. State Bank of India (SBI)"
                     className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm font-mono focus:outline-none focus:border-[var(--accent-cobalt)] rounded-none"
                   />
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {["Northwind Secure Bank", "PayPal Verification", "Chase Online Security", "Corporate SSO Gateway", "Meta Account Recovery"].map((b) => (
-                      <button
-                        key={b}
-                        type="button"
-                        onClick={() => handleBrandPill(b)}
-                        className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
-                          portalBrand === b
-                            ? "border-[var(--accent-cobalt)] bg-[var(--accent-cobalt)]/10 text-[var(--accent-cobalt)] font-bold"
-                            : "border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                        }`}
-                      >
-                        {b}
-                      </button>
-                    ))}
+                  <div className="space-y-2 mt-2.5">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1 font-bold">
+                        Indian Bank Presets:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          "State Bank of India (SBI)",
+                          "HDFC Bank NetBanking",
+                          "ICICI Bank",
+                          "Axis Bank NetBanking",
+                          "Punjab National Bank (PNB)",
+                          "Bank of Baroda",
+                          "Kotak Mahindra Bank",
+                          "Canara Bank",
+                          "Paytm Payments Bank",
+                          "Union Bank of India",
+                        ].map((b) => (
+                          <button
+                            key={b}
+                            type="button"
+                            onClick={() => handleBrandPill(b)}
+                            className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
+                              portalBrand === b
+                                ? "border-[var(--accent-cobalt)] bg-[var(--accent-cobalt)]/15 text-[var(--accent-cobalt)] font-bold"
+                                : "border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                            }`}
+                          >
+                            {b}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1 font-bold">
+                        Global & Enterprise Presets:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          "Northwind Secure Bank",
+                          "PayPal Verification",
+                          "Chase Online Security",
+                          "Corporate SSO Gateway",
+                          "Meta Account Recovery",
+                        ].map((b) => (
+                          <button
+                            key={b}
+                            type="button"
+                            onClick={() => handleBrandPill(b)}
+                            className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
+                              portalBrand === b
+                                ? "border-[var(--accent-cobalt)] bg-[var(--accent-cobalt)]/15 text-[var(--accent-cobalt)] font-bold"
+                                : "border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                            }`}
+                          >
+                            {b}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -368,7 +445,7 @@ function CreateTrapForm() {
                       type="text"
                       value={decoyUsername}
                       onChange={(e) => setDecoyUsername(e.target.value)}
-                      placeholder="e.g. operator@domain.com or 84192031"
+                      placeholder="e.g. ramesh.sharma91@gmail.com or 84192031"
                       className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-primary)] text-xs font-mono focus:outline-none focus:border-[var(--accent-cobalt)] rounded-none"
                     />
                     <span className="text-[10px] font-mono text-[var(--text-muted)] block mt-1">
@@ -385,7 +462,7 @@ function CreateTrapForm() {
                       type="text"
                       value={decoyPassword}
                       onChange={(e) => setDecoyPassword(e.target.value)}
-                      placeholder="e.g. Passcode@2026 or leave blank for any"
+                      placeholder="e.g. NetBank#2026 or leave blank for any"
                       className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-primary)] text-xs font-mono focus:outline-none focus:border-[var(--accent-cobalt)] rounded-none"
                     />
                     <span className="text-[10px] font-mono text-[var(--text-muted)] block mt-1">
@@ -404,7 +481,7 @@ function CreateTrapForm() {
                     type="text"
                     value={lureHeadline}
                     onChange={(e) => setLureHeadline(e.target.value)}
-                    placeholder="e.g. Urgent: Account verification required to unlock pending hold on funds."
+                    placeholder="e.g. Urgent KYC Update: Complete NetBanking verification within 24 hours to prevent account suspension."
                     className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-primary)] text-xs font-mono focus:outline-none focus:border-[var(--accent-cobalt)] rounded-none"
                   />
                 </div>
@@ -420,9 +497,25 @@ function CreateTrapForm() {
                       type="text"
                       value={decoyBalance}
                       onChange={(e) => setDecoyBalance(e.target.value)}
-                      placeholder="£14,892.40"
+                      placeholder="₹85,450.00"
                       className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-primary)] text-xs font-mono focus:outline-none focus:border-[var(--accent-cobalt)] rounded-none"
                     />
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {["₹85,450.00", "₹1,42,800.00", "₹25,000.00", "₹3,50,000.00", "£14,892.40", "$18,250.00"].map((bal) => (
+                        <button
+                          key={bal}
+                          type="button"
+                          onClick={() => setDecoyBalance(bal)}
+                          className={`text-[9px] font-mono px-1.5 py-0.5 border ${
+                            decoyBalance === bal
+                              ? "border-[var(--accent-cobalt)] bg-[var(--accent-cobalt)]/15 text-[var(--accent-cobalt)] font-bold"
+                              : "border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                          }`}
+                        >
+                          {bal}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div>
@@ -434,9 +527,31 @@ function CreateTrapForm() {
                       type="text"
                       value={securityQuestion}
                       onChange={(e) => setSecurityQuestion(e.target.value)}
-                      placeholder="What was the name of your first pet?"
+                      placeholder="What was the name of your first school or pet?"
                       className="w-full p-3 border border-[var(--border-color)] bg-[var(--bg-primary)] text-xs font-mono focus:outline-none focus:border-[var(--accent-cobalt)] rounded-none"
                     />
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {[
+                        "What is your mother's maiden name?",
+                        "What was the name of your first school in Delhi/Mumbai?",
+                        "What is your primary branch home city?",
+                        "What was the name of your first pet?",
+                      ].map((sq) => (
+                        <button
+                          key={sq}
+                          type="button"
+                          onClick={() => setSecurityQuestion(sq)}
+                          className={`text-[9px] font-mono px-1.5 py-0.5 border truncate max-w-[200px] ${
+                            securityQuestion === sq
+                              ? "border-[var(--accent-cobalt)] bg-[var(--accent-cobalt)]/15 text-[var(--accent-cobalt)] font-bold"
+                              : "border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                          }`}
+                          title={sq}
+                        >
+                          {sq}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

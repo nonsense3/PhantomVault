@@ -18,6 +18,8 @@ import {
   Lock,
   CloudUpload,
   CheckCircle2,
+  Key,
+  User,
 } from "lucide-react";
 import { formatClock, formatDuration, formatTime, timeAgo } from "@/lib/format";
 import type { Incident, Ioc, LiveEvent, Message, Trap } from "@/lib/types";
@@ -265,7 +267,7 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
                 </>
               ) : (
                 <>
-                  <CloudUpload className="w-3.5 h-3.5 text-[var(--accent-cobalt)] shrink-0" />
+                  <CloudUpload className="w-3.5 h-3.5 text-white shrink-0" />
                   <span>{vaulting ? "Vaulting..." : "Vault to Cloud"}</span>
                 </>
               )}
@@ -286,7 +288,7 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
                 Target Honeypot Credentials Intercepted
               </span>
               <span className="text-xs text-[var(--text-secondary)]">
-                The visitor or intruder submitted credentials into your decoy login portal. The intercepted username/password has been cataloged in this incident below.
+                The visitor or intruder submitted credentials into your decoy login portal. The intercepted credentials and telemetry have been cataloged below.
               </span>
             </div>
           </div>
@@ -297,111 +299,381 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
       )}
 
       {/* =============================================================== */}
-      {/* SPLIT-SCREEN CONVERSATION VIEW (PRD DB-3)                       */}
+      {/* INCIDENT WORKSPACE: LOGIN PORTAL VS CHAT DECOY (PRD DB-3)       */}
       {/* =============================================================== */}
-      <div className="grid grid-cols-12 min-h-[680px]">
-        {/* LEFT PANE: ADVERSARY / ATTACKER (Cols 1-6) */}
-        <div className="col-span-12 lg:col-span-6 border-b lg:border-b-0 lg:border-r border-[var(--border-color)] p-6 flex flex-col justify-between bg-black/[0.01] dark:bg-white/[0.01]">
-          <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3 mb-6">
-            <span className="grid-sidebar-label text-red-600 dark:text-red-400 flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-none inline-block" />
-              ADVERSARY TRANSMISSION
-            </span>
-            <span className="text-[10px] font-mono text-[var(--text-muted)]">
-              CAPTURED VIA SECURE HONEYPOT
-            </span>
-          </div>
-
-          <div className="space-y-4 flex-1 overflow-y-auto max-h-[560px] pr-2">
-            {messages.filter((m) => m.role === "attacker").length === 0 ? (
-              <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)]">
-                AWAITING FIRST INCOMING ADVERSARY PAYLOAD...
+      {trap?.template === "fake_login" ? (
+        /* ------------------------------------------------------------- */
+        /* MODE A: LOGIN PORTAL LINK HONEYPOT (NO DECOY PERSONA COLUMN)   */
+        /* ------------------------------------------------------------- */
+        <div className="grid grid-cols-12 min-h-[660px]">
+          {/* MAIN INTERCEPTION STREAM (Cols 1-8) */}
+          <div className="col-span-12 lg:col-span-8 border-b lg:border-b-0 lg:border-r border-[var(--border-color)] p-6 flex flex-col justify-between bg-black/[0.01] dark:bg-white/[0.01]">
+            <div>
+              <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3 mb-6">
+                <span className="grid-sidebar-label text-amber-500 flex items-center gap-2">
+                  <Key className="w-4 h-4 text-amber-500" />
+                  INTERCEPTED CREDENTIALS & PORTAL TELEMETRY
+                </span>
+                <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                  LIVE HONEYPOT STREAM • {messages.filter((m) => m.role === "attacker").length} CAPTURES
+                </span>
               </div>
-            ) : (
-              messages
-                .filter((m) => m.role === "attacker")
-                .map((msg) => {
-                  const isCaptured =
-                    msg.kind === "form_submit" ||
-                    msg.content.includes("[CAPTURED") ||
-                    msg.content.includes("[Form submission");
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`p-4 border ${
-                        isCaptured
-                          ? "border-amber-500/50 bg-amber-500/10 shadow-sm"
-                          : "border-red-500/30 bg-red-500/5"
-                      } text-xs font-mono space-y-2`}
-                    >
-                      <div className="flex items-center justify-between text-[10px] font-bold">
-                        <span
-                          className={
-                            isCaptured
-                              ? "text-amber-500 dark:text-amber-400"
-                              : "text-red-600 dark:text-red-400"
-                          }
-                        >
-                          {isCaptured
-                            ? "[CAPTURED CREDENTIALS / TELEMETRY]"
-                            : `[INBOUND • ${msg.kind.toUpperCase()}]`}
-                        </span>
-                        <span className="text-[var(--text-muted)]">{formatTime(msg.createdAt)}</span>
-                      </div>
-                      <p className="text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap font-mono">
-                        {msg.content}
-                      </p>
-                    </div>
-                  );
-                })
-            )}
-          </div>
-        </div>
 
-        {/* RIGHT PANE: DECOY PERSONA (Cols 7-12) */}
-        <div className="col-span-12 lg:col-span-6 p-6 flex flex-col justify-between bg-[var(--bg-surface)]">
-          <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3 mb-6">
-            <span className="grid-sidebar-label text-[var(--accent-cobalt)] flex items-center gap-2">
-              <span className="w-2 h-2 bg-[var(--accent-cobalt)] rounded-none inline-block animate-pulse" />
-              DECOY PERSONA: {trap?.config.personaName.toUpperCase()}
-            </span>
-            <span className="text-[10px] font-mono text-[var(--text-muted)]">
-              GULLIBILITY: {trap?.gullibility}%
-            </span>
-          </div>
-
-          <div className="space-y-4 flex-1 overflow-y-auto max-h-[560px] pr-2">
-            {messages.filter((m) => m.role === "ai").length === 0 ? (
-              <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)]">
-                DECOY STANDING BY FOR ENGAGEMENT TRIGGER...
-              </div>
-            ) : (
-              messages
-                .filter((m) => m.role === "ai")
-                .map((msg) => (
-                  <div
-                    key={msg.id}
-                    className="p-4 border border-[var(--accent-cobalt)]/40 bg-[var(--accent-cobalt)]/5 text-xs font-mono space-y-2"
-                  >
-                    <div className="flex items-center justify-between text-[10px] text-[var(--accent-cobalt)] font-bold">
-                      <span>[DECOY RESPONSE]</span>
-                      {msg.action && (
-                        <span className="bg-[var(--accent-cobalt)] text-white px-2 py-0.5 text-[9px] uppercase font-bold tracking-wider">
-                          {msg.action}
-                        </span>
-                      )}
-                      <span>{formatTime(msg.createdAt)}</span>
-                    </div>
-                    <p className="text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
-                      {msg.content}
+              <div className="space-y-4 overflow-y-auto max-h-[560px] pr-2">
+                {messages.filter((m) => m.role === "attacker").length === 0 ? (
+                  <div className="p-12 text-center text-xs font-mono text-[var(--text-muted)] border border-dashed border-[var(--border-color)] bg-[var(--bg-surface)]">
+                    <Lock className="w-8 h-8 text-amber-500/40 mx-auto mb-3" />
+                    <p className="font-bold text-[var(--text-primary)] uppercase tracking-wider mb-1">
+                      Awaiting Intruder Form Submissions
                     </p>
+                    <p className="text-[11px] text-[var(--text-secondary)] max-w-md mx-auto">
+                      The honeypot login portal link is active. When a visitor or adversary enters credentials, 2FA codes, or security challenge answers into the target portal, captured inputs will stream live here in real-time.
+                    </p>
+                    <div className="mt-4">
+                      <button
+                        onClick={handleSimulate}
+                        disabled={simulating}
+                        className="poster-btn-secondary poster-btn-sm text-[10px]"
+                      >
+                        {simulating ? "Simulating..." : "Simulate Intruder Turn"}
+                      </button>
+                    </div>
                   </div>
-                ))
-            )}
-            <div ref={messagesEndRef} />
+                ) : (
+                  messages
+                    .filter((m) => m.role === "attacker")
+                    .map((msg) => {
+                      const isCreds =
+                        msg.content.includes("[CAPTURED LOGIN CREDENTIALS]") ||
+                        msg.content.includes("[Form submission - login]");
+                      const isOtp =
+                        msg.content.includes("[CAPTURED 2FA / OTP CODE]") ||
+                        msg.content.includes("[Form submission - otp]");
+                      const isSec =
+                        msg.content.includes("[CAPTURED SECURITY CHALLENGE]") ||
+                        msg.content.includes("[Form submission - security]");
+                      const isTransfer =
+                        msg.content.includes("[CAPTURED WIRE TRANSFER") ||
+                        msg.content.includes("[Form submission - transfer]");
+
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`p-4 border text-xs font-mono space-y-3 ${
+                            isCreds
+                              ? "border-amber-500/50 bg-amber-500/10 shadow-sm"
+                              : isOtp
+                              ? "border-blue-500/50 bg-blue-500/10 shadow-sm"
+                              : isSec
+                              ? "border-purple-500/50 bg-purple-500/10 shadow-sm"
+                              : isTransfer
+                              ? "border-emerald-500/50 bg-emerald-500/10 shadow-sm"
+                              : "border-red-500/30 bg-red-500/5"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-[10px] font-bold">
+                            <span
+                              className={`flex items-center gap-1.5 uppercase tracking-wider ${
+                                isCreds
+                                  ? "text-amber-500 dark:text-amber-400"
+                                  : isOtp
+                                  ? "text-blue-500 dark:text-blue-400"
+                                  : isSec
+                                  ? "text-purple-400"
+                                  : isTransfer
+                                  ? "text-emerald-500"
+                                  : "text-red-500"
+                              }`}
+                            >
+                              {isCreds ? (
+                                <>
+                                  <Key className="w-3.5 h-3.5" />
+                                  [CAPTURED LOGIN CREDENTIALS]
+                                </>
+                              ) : isOtp ? (
+                                <>
+                                  <Shield className="w-3.5 h-3.5" />
+                                  [CAPTURED 2FA / OTP CODE]
+                                </>
+                              ) : isSec ? (
+                                <>
+                                  <Lock className="w-3.5 h-3.5" />
+                                  [CAPTURED SECURITY CHALLENGE]
+                                </>
+                              ) : isTransfer ? (
+                                <>
+                                  <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                                  [CAPTURED WIRE TRANSFER ATTEMPT]
+                                </>
+                              ) : (
+                                "[INTRUDER PORTAL PAYLOAD]"
+                              )}
+                            </span>
+                            <span className="text-[var(--text-muted)] font-normal">{formatTime(msg.createdAt)}</span>
+                          </div>
+
+                          <div className="bg-[var(--bg-primary)] p-3 border border-[var(--border-color)]">
+                            <pre className="text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap font-mono text-xs">
+                              {msg.content}
+                            </pre>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 text-[10px] text-[var(--text-muted)]">
+                            <span>SOURCE IP: {incident.sourceIp} ({incident.geo?.city || "Unknown"}, {incident.geo?.country || "Proxy/VPN"})</span>
+                            <button
+                              onClick={() => handleCopy(msg.content)}
+                              className="hover:text-[var(--text-primary)] flex items-center gap-1"
+                              title="Copy payload"
+                            >
+                              <Copy className="w-3 h-3" />
+                              <span>Copy Payload</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDEBAR: HONEYPOT TARGET CONFIGURATION & INTRUDER PROFILE (Cols 9-12) */}
+          <div className="col-span-12 lg:col-span-4 p-6 flex flex-col justify-between bg-[var(--bg-surface)]">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                <span className="grid-sidebar-label text-[var(--accent-cobalt)] flex items-center gap-2">
+                  <Shield className="w-3.5 h-3.5 text-[var(--accent-cobalt)]" />
+                  HONEYPOT DOSSIER & TARGET
+                </span>
+                <span className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-500 font-bold">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-none inline-block animate-pulse" />
+                  ARMED & ACTIVE
+                </span>
+              </div>
+
+              <div className="p-4 border border-[var(--border-color)] bg-[var(--bg-primary)] space-y-3 font-mono text-xs">
+                <div>
+                  <span className="text-[10px] uppercase text-[var(--text-muted)] block">TARGET DECOY BRAND:</span>
+                  <span className="font-bold text-sm text-[var(--accent-cobalt)] block">
+                    {trap?.config.portalBrand || "Secure Banking Portal"}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-[var(--border-color)]">
+                  <span className="text-[10px] uppercase text-[var(--text-muted)] block">PUBLIC HONEYPOT URL:</span>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <span className="text-[11px] truncate text-[var(--text-secondary)]">
+                      /t/{trap?.slug}
+                    </span>
+                    <button
+                      onClick={() => handleCopy(`${typeof window !== "undefined" ? window.location.origin : ""}/t/${trap?.slug}`)}
+                      className="text-[10px] text-[var(--accent-cobalt)] hover:underline flex items-center gap-1 shrink-0"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[var(--border-color)]">
+                  <span className="text-[10px] uppercase text-[var(--text-muted)] block">TARGET BALANCE BAIT:</span>
+                  <span className="font-bold text-emerald-500">
+                    {trap?.config.decoyBalance || "₹85,450.00"}
+                  </span>
+                </div>
+
+                {trap?.config.securityQuestion && (
+                  <div className="pt-2 border-t border-[var(--border-color)]">
+                    <span className="text-[10px] uppercase text-[var(--text-muted)] block">TARGET SECURITY QUESTION:</span>
+                    <span className="text-[11px] text-[var(--text-secondary)] block">
+                      {trap.config.securityQuestion}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Intruder Telemetry Card */}
+              <div className="p-4 border border-[var(--border-color)] bg-[var(--bg-primary)] space-y-2.5 font-mono text-xs">
+                <span className="grid-sidebar-label text-red-500 block text-[10px]">
+                  INTRUDER DEVICE & NETWORK
+                </span>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-[var(--text-muted)]">IP ADDRESS:</span>
+                  <strong className="text-[var(--text-primary)]">{incident.sourceIp}</strong>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-[var(--text-muted)]">GEOLOCATION:</span>
+                  <span>{incident.geo?.city || "Unknown"}, {incident.geo?.country || "Proxy/VPN"}</span>
+                </div>
+                <div className="text-[11px] pt-1 border-t border-[var(--border-color)]">
+                  <span className="text-[10px] text-[var(--text-muted)] block mb-0.5">USER AGENT:</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] line-clamp-2" title={incident.userAgent}>
+                    {incident.userAgent}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-[var(--border-color)] mt-4">
+              <div className="flex justify-between text-xs font-mono">
+                <span className="text-[var(--text-muted)]">STALL TIME ELAPSED:</span>
+                <span className="font-bold text-[var(--accent-cobalt)]">{formatClock(secondsWasted)}</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* ------------------------------------------------------------- */
+        /* MODE B: DECOY PERSONA CHAT (UNIFIED STREAM, NO ISOLATED BOX)  */
+        /* ------------------------------------------------------------- */
+        <div className="grid grid-cols-12 min-h-[680px]">
+          {/* MAIN CHAT CONVERSATION THREAD (Cols 1-8) */}
+          <div className="col-span-12 lg:col-span-8 border-b lg:border-b-0 lg:border-r border-[var(--border-color)] p-6 flex flex-col justify-between bg-black/[0.01] dark:bg-white/[0.01]">
+            <div>
+              <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3 mb-6">
+                <span className="grid-sidebar-label text-[var(--accent-cobalt)] flex items-center gap-2">
+                  <span className="w-2 h-2 bg-[var(--accent-cobalt)] rounded-none inline-block animate-pulse" />
+                  LIVE DECOY PERSONA CONVERSATION: {trap?.config.personaName.toUpperCase()}
+                </span>
+                <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                  GULLIBILITY: {trap?.gullibility}% • TURNS: {messages.length}
+                </span>
+              </div>
+
+              <div className="space-y-4 overflow-y-auto max-h-[580px] pr-2">
+                {messages.length === 0 ? (
+                  <div className="p-12 text-center text-xs font-mono text-[var(--text-muted)] border border-dashed border-[var(--border-color)] bg-[var(--bg-surface)]">
+                    DECOY PERSONA STANDING BY... WAITING FOR ADVERSARY CONTACT.
+                  </div>
+                ) : (
+                  messages.map((msg) => {
+                    const isAttacker = msg.role === "attacker";
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`p-4 border text-xs font-mono space-y-2 ${
+                          isAttacker
+                            ? "border-red-500/40 bg-red-500/5 mr-4"
+                            : "border-[var(--accent-cobalt)]/40 bg-[var(--accent-cobalt)]/5 ml-4"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] font-bold">
+                          {isAttacker ? (
+                            <span className="text-red-600 dark:text-red-400 flex items-center gap-1.5 uppercase">
+                              <span className="w-1.5 h-1.5 bg-red-500 rounded-none inline-block" />
+                              [ADVERSARY TRANSMISSION • {msg.kind.toUpperCase()}]
+                            </span>
+                          ) : (
+                            <span className="text-[var(--accent-cobalt)] flex items-center gap-1.5 uppercase">
+                              <span className="w-1.5 h-1.5 bg-[var(--accent-cobalt)] rounded-none inline-block animate-pulse" />
+                              [DECOY: {trap?.config.personaName.toUpperCase()}]
+                            </span>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            {msg.action && (
+                              <span className="bg-[var(--accent-cobalt)] text-white px-2 py-0.5 text-[9px] uppercase font-bold tracking-wider">
+                                {msg.action}
+                              </span>
+                            )}
+                            <span className="text-[var(--text-muted)] font-normal">{formatTime(msg.createdAt)}</span>
+                          </div>
+                        </div>
+
+                        <p className="text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap font-mono">
+                          {msg.content}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDEBAR: PERSONA & ADVERSARY DOSSIER (Cols 9-12) */}
+          <div className="col-span-12 lg:col-span-4 p-6 flex flex-col justify-between bg-[var(--bg-surface)]">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                <span className="grid-sidebar-label text-[var(--accent-cobalt)] flex items-center gap-2">
+                  <User className="w-3.5 h-3.5 text-[var(--accent-cobalt)]" />
+                  DECOY PERSONA DOSSIER
+                </span>
+                <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                  ACTIVE ENGAGEMENT
+                </span>
+              </div>
+
+              <div className="p-4 border border-[var(--border-color)] bg-[var(--bg-primary)] space-y-3 font-mono text-xs">
+                <div>
+                  <span className="text-[10px] uppercase text-[var(--text-muted)] block">PERSONA IDENTITY:</span>
+                  <span className="font-bold text-sm text-[var(--accent-cobalt)] block">
+                    {trap?.config.personaName}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-[var(--border-color)]">
+                  <span className="text-[10px] uppercase text-[var(--text-muted)] block">ARCHETYPE:</span>
+                  <span className="font-bold uppercase text-[var(--text-primary)]">
+                    {trap?.persona.replace(/_/g, " ")}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-[var(--border-color)]">
+                  <span className="text-[10px] uppercase text-[var(--text-muted)] block">GULLIBILITY INDEX:</span>
+                  <span className="font-bold text-amber-500">
+                    {trap?.gullibility}% (Delays & Stalls)
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-[var(--border-color)]">
+                  <span className="text-[10px] uppercase text-[var(--text-muted)] block">PUBLIC DECOY LINK:</span>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <span className="text-[11px] truncate text-[var(--text-secondary)]">
+                      /t/{trap?.slug}
+                    </span>
+                    <button
+                      onClick={() => handleCopy(`${typeof window !== "undefined" ? window.location.origin : ""}/t/${trap?.slug}`)}
+                      className="text-[10px] text-[var(--accent-cobalt)] hover:underline flex items-center gap-1 shrink-0"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Adversary Profile */}
+              <div className="p-4 border border-[var(--border-color)] bg-[var(--bg-primary)] space-y-2.5 font-mono text-xs">
+                <span className="grid-sidebar-label text-red-500 block text-[10px]">
+                  TARGET ADVERSARY PROFILE
+                </span>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-[var(--text-muted)]">TARGET IP:</span>
+                  <strong className="text-[var(--text-primary)]">{incident.sourceIp}</strong>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-[var(--text-muted)]">GEOLOCATION:</span>
+                  <span>{incident.geo?.city || "Unknown"}, {incident.geo?.country || "Proxy/VPN"}</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-[var(--text-muted)]">TURNS LOGGED:</span>
+                  <span className="font-bold">{messages.length}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-[var(--border-color)] mt-4">
+              <div className="flex justify-between text-xs font-mono">
+                <span className="text-[var(--text-muted)]">ENGAGEMENT TIME:</span>
+                <span className="font-bold text-[var(--accent-cobalt)]">{formatClock(secondsWasted)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =============================================================== */}
       {/* EXTRACTED IOCS SIDEBAR / TRAY (PRD TI-1, TI-2)                  */}
