@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Bold.woff2') format('woff2');
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-family-primary: 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Reality-First Poster Modernist Theme Tokens (Light mode: Cream base) */
+  --bg-primary: #E3E2DE;
+  --bg-surface: #EAE9E6;
+  --bg-subtle: #DCDAD6;
+  --text-primary: #141414;
+  --text-secondary: #444343;
+  --text-muted: #7A7A7A;
+  --accent-cobalt: #1351AA;
+  --accent-cobalt-hover: #0F3F85;
+  --border-color: #C7C7C7;
+  --border-strong: #141414;
+  
+  /* Threat color coding (PRD 9.0) */
+  --threat-high: #D92525;
+  --threat-high-bg: rgba(217, 37, 37, 0.12);
+  --threat-medium: #D97706;
+  --threat-medium-bg: rgba(217, 119, 6, 0.12);
+  --threat-low: #15803D;
+  --threat-low-bg: rgba(21, 128, 61, 0.12);
+}
+
+html.dark {
+  /* Reality-First Poster Modernist Theme Tokens (Dark mode: Monochromatic charcoal/jet) */
+  --bg-primary: #0E0E0E;
+  --bg-surface: #141414;
+  --bg-subtle: #1C1C1C;
+  --text-primary: #E3E2DE;
+  --text-secondary: #A6A5A3;
+  --text-muted: #7A7A7A;
+  --accent-cobalt: #2D6FE0;
+  --accent-cobalt-hover: #1351AA;
+  --border-color: #272727;
+  --border-strong: #E3E2DE;
+  
+  --threat-high: #EF4444;
+  --threat-high-bg: rgba(239, 68, 68, 0.18);
+  --threat-medium: #F59E0B;
+  --threat-medium-bg: rgba(245, 158, 11, 0.18);
+  --threat-low: #22C55E;
+  --threat-low-bg: rgba(34, 197, 94, 0.18);
+}
+
+* {
+  border-color: var(--border-color);
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-family-primary);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+}
+
+/* Strict Poster Modernist Grid & Component Utilities */
+
+.poster-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--accent-cobalt);
+  color: #E3E2DE;
+  font-family: var(--font-family-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 1rem 2rem;
+  border: 1px solid var(--accent-cobalt);
+  border-radius: 0px !important;
+  cursor: pointer;
+  transition: background-color 0.2s linear, border-color 0.2s linear, color 0.2s linear;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.poster-btn:hover {
+  background-color: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.poster-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-family-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 1rem 2rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0px !important;
+  cursor: pointer;
+  transition: background-color 0.2s linear, border-color 0.2s linear, color 0.2s linear;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.poster-btn-secondary:hover {
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.poster-btn-sm {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.75rem;
+}
+
+.grid-sidebar-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+}
+
+.headline-hero {
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.headline-section {
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.threat-high {
+  color: var(--threat-high);
+  background-color: var(--threat-high-bg);
+  border: 1px solid var(--threat-high);
+}
+
+.threat-medium {
+  color: var(--threat-medium);
+  background-color: var(--threat-medium-bg);
+  border: 1px solid var(--threat-medium);
+}
+
+.threat-low {
+  color: var(--threat-low);
+  background-color: var(--threat-low-bg);
+  border: 1px solid var(--threat-low);
+}
+
+/* Custom scrollbars with sharp corners */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-subtle);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
