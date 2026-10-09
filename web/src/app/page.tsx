@@ -45,22 +45,25 @@ export default function HomePage() {
                 TAKE THE EVIDENCE.
               </h1>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mt-6 pt-8 border-t border-[var(--border-color)]">
-                <div className="lg:col-span-7">
-                  <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed max-w-[540px]">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-center mt-6 pt-8 border-t border-[var(--border-color)]">
+                <div className="xl:col-span-7">
+                  <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed max-w-[560px]">
                     Deploy adaptive digital honeypots in 60 seconds. When an intruder strikes, multimodal AI personas engage them in convincing, endless conversations—stalling their operations while passively collecting structured forensic threat intelligence.
                   </p>
                 </div>
 
-                <div className="lg:col-span-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                  <Link href="/dashboard" className="poster-btn text-center">
-                    Enter Console <ArrowRight className="w-4 h-4" />
+                <div className="xl:col-span-5 flex flex-wrap items-center gap-3.5">
+                  <Link href="/dashboard" className="poster-btn whitespace-nowrap">
+                    <span>Enter Console</span>
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
                     href="/analyze"
-                    className="text-xs font-bold uppercase tracking-widest text-[var(--text-primary)] hover:text-[var(--accent-cobalt)] underline underline-offset-8 transition-colors text-center sm:text-left py-2"
+                    className="poster-btn-secondary whitespace-nowrap"
+                    title="Analyze suspicious emails, screenshots, or URLs"
                   >
-                    Analyze Threat Now →
+                    <span>Analyze Threat</span>
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
