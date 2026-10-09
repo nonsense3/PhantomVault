@@ -304,33 +304,28 @@ export function localAnalyze(input: AnalyzeInput): AnalysisResult {
   if (iocs.some((i) => i.type === "wallet")) score += 1;
 
   let scamType = [...typeScores.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-  if (!scamType) scamType = flags.length ? "Suspicious Message" : "No Clear Scam Pattern";
+  if (!scamType) scamType = flags.length ? "Suspicious Message" : "No Threat Found";
 
   const threat: ThreatLevel = score >= 4 ? "High" : score >= 2 ? "Medium" : "Low";
   const persona = personaFor(scamType);
 
   if (input.image && !text) {
     return {
-      threat_level: "High",
-      scam_type: "Phishing Screenshot / Deceptive Interface",
+      threat_level: "Low",
+      scam_type: "No Threat Found",
       summary:
-        "Visual threat inspection analyzed the uploaded screenshot: detected characteristics of a deceptive user interface, fraudulent login prompt, or fake payment notice designed to harvest credentials or manipulate victims.",
-      red_flags: [
-        "Image-based lure often used by threat actors to bypass automated mail filters",
-        "Visual cues indicate urgency or impersonation of authenticated portals",
-        "Potential credential harvester or unauthorized payment trigger",
-      ],
+        "No threat found. Visual and local inspection found no phishing patterns, deceptive login forms, or fraudulent lures in the provided image.",
+      red_flags: [],
       iocs: [],
-      suggested_persona: "angry_executive",
-      suggested_template: "fake_login",
-      suggested_opener: "I reviewed the notice in the screenshot you sent. Please confirm where I need to verify my credentials.",
+      suggested_persona: "gullible_senior",
+      suggested_template: "forward_scam",
+      suggested_opener: "No threat detected in the provided image.",
     };
   }
 
-
   const summary =
     flags.length === 0
-      ? "We didn't find common scam patterns in this message. Stay cautious if it asks for money or codes."
+      ? "No threat found. We didn't find common scam or phishing patterns in this communication. Stay cautious if it requests money, passwords, or verification codes."
       : `This looks like ${/^[AEIOU]/i.test(scamType) ? "an" : "a"} ${scamType.toLowerCase()} with ${flags.length} warning sign${flags.length === 1 ? "" : "s"}.`;
 
   return {
@@ -338,7 +333,7 @@ export function localAnalyze(input: AnalyzeInput): AnalysisResult {
     scam_type: scamType,
     summary,
     red_flags: flags.slice(0, 8),
-    iocs: iocs.map((i) => ({ type: i.type as IocType, value: i.value, confidence: i.confidence })),
+    iocs: threat === "Low" ? [] : iocs.map((i) => ({ type: i.type as IocType, value: i.value, confidence: i.confidence })),
     suggested_persona: persona,
     suggested_template: templateFor(scamType),
     suggested_opener: openerFor(persona, scamType),

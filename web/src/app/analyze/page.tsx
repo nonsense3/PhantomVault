@@ -69,6 +69,10 @@ export default function AnalyzerPage() {
       label: "Overdue Invoice",
       text: "Attn Accounts Payable: Invoice INV-88219 is now 14 days overdue. Please remit the remaining balance of $2,450 to updated ACH routing 021000021 account 88391204 immediately to avoid collections.",
     },
+    {
+      label: "Benign Work Email (Safe / No Threat)",
+      text: "From: sarah.jenkins@acmecorp.internal\nSubject: Team lunch on Thursday\n\nHey everyone, let's meet at 12:30 PM in the cafeteria for our weekly sprint recap and lunch. No preparation needed!",
+    },
   ];
 
   const sampleAttachments = [
@@ -719,26 +723,56 @@ export default function AnalyzerPage() {
 
             {/* Screenshot Vision Tab */}
             {activeTab === "image" && (
-              <div>
-                <label className="grid-sidebar-label block mb-2">UPLOAD SCREENSHOT (MULTIMODAL VISION)</label>
-                <div className="border border-dashed border-[var(--border-color)] bg-[var(--bg-surface)] p-8 text-center">
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    id="screenshot-input"
-                  />
-                  <label htmlFor="screenshot-input" className="cursor-pointer flex flex-col items-center">
-                    <Upload className="w-8 h-8 text-[var(--text-muted)] mb-3" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                      {imageFile ? imageFile.name : "Select Screenshot (PNG / JPG up to 5MB)"}
-                    </span>
-                    <span className="text-[10px] font-mono text-[var(--text-muted)] mt-1">
-                      Our vision engine reads text, detects spoofed logos, and inspects deceptive UI elements
-                    </span>
-                  </label>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="grid-sidebar-label">UPLOAD SCREENSHOT (MULTIMODAL GEMMA 4 VISION)</label>
+                    <span className="text-[10px] text-emerald-400 font-mono">Multimodal Threat Verifier</span>
+                  </div>
+                  <div className="border border-dashed border-[var(--border-color)] hover:border-[var(--accent-cobalt)]/60 bg-[var(--bg-surface)] p-8 text-center transition-colors">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="screenshot-input"
+                    />
+                    <label htmlFor="screenshot-input" className="cursor-pointer flex flex-col items-center">
+                      <Upload className="w-8 h-8 text-[var(--text-muted)] mb-3" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                        {imageFile ? imageFile.name : "Select Screenshot (PNG / JPG / WebP up to 5MB)"}
+                      </span>
+                      <span className="text-[10px] font-mono text-[var(--text-muted)] mt-1">
+                        Gemma 4 verifies if the image is a phishing lure vs. a random benign picture
+                      </span>
+                    </label>
+                  </div>
                 </div>
+
+                {imageFile && (
+                  <div className="p-3 border border-[var(--border-color)] bg-[var(--bg-surface)] flex items-center justify-between text-xs font-mono">
+                    <div className="flex items-center gap-3 truncate">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`data:${imageFile.mimeType};base64,${imageFile.base64}`}
+                        alt="Screenshot Preview"
+                        className="w-12 h-12 object-cover border border-[var(--border-color)] rounded-none flex-shrink-0"
+                      />
+                      <div className="truncate">
+                        <span className="font-bold block truncate">{imageFile.name}</span>
+                        <span className="text-[10px] text-[var(--text-muted)]">Image ready for Gemma 4 visual inspection</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setImageFile(null)}
+                      className="p-1 hover:text-red-400 text-[var(--text-muted)]"
+                      title="Clear image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -981,14 +1015,21 @@ export default function AnalyzerPage() {
               {/* Red flags */}
               <div>
                 <span className="grid-sidebar-label block mb-2">OBSERVED RED FLAGS</span>
-                <ul className="space-y-2">
-                  {result.red_flags.map((flag, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs font-mono text-[var(--text-primary)]">
-                      <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <span>{flag}</span>
-                    </li>
-                  ))}
-                </ul>
+                {result.red_flags.length > 0 ? (
+                  <ul className="space-y-2">
+                    {result.red_flags.map((flag, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs font-mono text-[var(--text-primary)]">
+                        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <span>{flag}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="p-3 border border-emerald-500/30 bg-emerald-500/5 text-xs font-mono text-emerald-500 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    <span>No red flags detected. The analyzed input shows no phishing or scam indicators.</span>
+                  </div>
+                )}
               </div>
 
               {/* Indicators of compromise */}
@@ -1022,26 +1063,34 @@ export default function AnalyzerPage() {
                   <span className="font-bold text-[var(--accent-cobalt)] uppercase">
                     TACTICAL COUNTERMEASURE: DEPLOY HONEYPOT DECOY
                   </span>
-                  <span className="text-[10px] text-[var(--text-muted)]">OPTIONAL ATTACK RETALIATION</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">
+                    {result.threat_level === "Low" || result.scam_type.toLowerCase().includes("no threat")
+                      ? "NOT REQUIRED FOR BENIGN CONTENT"
+                      : "OPTIONAL ATTACK RETALIATION"}
+                  </span>
                 </div>
                 <p className="text-[var(--text-secondary)] text-[11px] leading-relaxed">
-                  Do not interact with the attacker directly on your real email. Instead, spawn an automated Phantom Vault decoy trap to bait the sender, waste their time, and capture real-time telemetry.
+                  {result.threat_level === "Low" || result.scam_type.toLowerCase().includes("no threat")
+                    ? "No tactical countermeasure required: This artifact does not appear to be an active threat or phishing communication. Honeypot decoy traps are only recommended for active scams."
+                    : "Do not interact with the attacker directly on your real email. Instead, spawn an automated Phantom Vault decoy trap to bait the sender, waste their time, and capture real-time telemetry."}
                 </p>
-                <div className="pt-1 flex flex-wrap items-center justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <div>Persona Archetype: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_persona}</span></div>
-                    <div>Trap Template: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_template}</span></div>
-                    <div className="text-[10px] text-[var(--text-muted)] truncate max-w-[320px]">Opener: "{result.suggested_opener}"</div>
+                {!(result.threat_level === "Low" || result.scam_type.toLowerCase().includes("no threat")) && (
+                  <div className="pt-1 flex flex-wrap items-center justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <div>Persona Archetype: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_persona}</span></div>
+                      <div>Trap Template: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_template}</span></div>
+                      <div className="text-[10px] text-[var(--text-muted)] truncate max-w-[320px]">Opener: "{result.suggested_opener}"</div>
+                    </div>
+                    <button
+                      onClick={handleTurnIntoDecoy}
+                      type="button"
+                      className="poster-btn poster-btn-sm"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Spawn Decoy Trap</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={handleTurnIntoDecoy}
-                    type="button"
-                    className="poster-btn poster-btn-sm"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Spawn Decoy Trap</span>
-                  </button>
-                </div>
+                )}
               </div>
             </div>
           )}
