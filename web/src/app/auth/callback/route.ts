@@ -42,11 +42,18 @@ export async function GET(request: Request) {
           data.user.email?.split("@")[0] ||
           "Security Lead";
 
+        const avatarUrl =
+          data.user.user_metadata?.avatar_url ||
+          data.user.user_metadata?.picture ||
+          data.user.identities?.[0]?.identity_data?.avatar_url ||
+          data.user.identities?.[0]?.identity_data?.picture ||
+          null;
+
         await admin.from("profiles").upsert(
           {
             id: data.user.id,
             display_name: displayName,
-            avatar_url: data.user.user_metadata?.avatar_url || null,
+            avatar_url: avatarUrl,
           },
           { onConflict: "id" }
         );

@@ -11,6 +11,7 @@ export async function GET() {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
+      avatarUrl: user.avatarUrl || null,
       createdAt: user.createdAt,
     },
   });
@@ -55,6 +56,7 @@ export async function PATCH(req: Request) {
         id: updated?.id || user.id,
         email: updated?.email || user.email,
         displayName: updated?.displayName || cleanName,
+        avatarUrl: updated?.avatarUrl || user.avatarUrl || null,
         createdAt: updated?.createdAt || user.createdAt,
       },
     });

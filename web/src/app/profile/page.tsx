@@ -34,6 +34,7 @@ interface UserProfile {
   id: string;
   email: string;
   displayName: string;
+  avatarUrl?: string | null;
   createdAt: string;
 }
 
@@ -253,8 +254,28 @@ export default function ProfilePage() {
             <div className="border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 space-y-6">
               {/* Avatar & Display name */}
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 border-2 border-[var(--accent-cobalt)] bg-black/5 dark:bg-white/5 flex items-center justify-center flex-shrink-0">
-                  <User className="w-8 h-8 text-[var(--accent-cobalt)]" />
+                <div className="w-16 h-16 border-2 border-[var(--accent-cobalt)] bg-black/5 dark:bg-white/5 flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.displayName}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fb = e.currentTarget.parentElement?.querySelector(".fallback-avatar-icon");
+                        if (fb) (fb as HTMLElement).style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={`fallback-avatar-icon w-full h-full items-center justify-center ${
+                      user.avatarUrl ? "hidden" : "flex"
+                    }`}
+                  >
+                    <User className="w-8 h-8 text-[var(--accent-cobalt)]" />
+                  </div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

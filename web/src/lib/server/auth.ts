@@ -22,16 +22,37 @@ export async function getCurrentUser(): Promise<UserRecord | null> {
       user.email?.split("@")[0] ||
       "Security Lead";
 
+    let avatarUrl =
+      user.user_metadata?.avatar_url ||
+      user.user_metadata?.picture ||
+      user.identities?.[0]?.identity_data?.avatar_url ||
+      user.identities?.[0]?.identity_data?.picture ||
+      undefined;
+
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data: profile } = await admin
         .from("profiles")
-        .select("display_name")
+        .select("display_name, avatar_url")
         .eq("id", user.id)
         .maybeSingle();
 
       if (profile?.display_name) {
         displayName = profile.display_name;
+      }
+      if (profile?.avatar_url) {
+        avatarUrl = profile.avatar_url;
+      } else if (avatarUrl) {
+        try {
+          await admin
+            .from("profiles")
+            .upsert(
+              { id: user.id, display_name: displayName, avatar_url: avatarUrl },
+              { onConflict: "id" }
+            );
+        } catch (syncErr) {
+          console.warn("[auth:getCurrentUser] profile avatar sync warning:", syncErr);
+        }
       }
     }
 
@@ -39,6 +60,7 @@ export async function getCurrentUser(): Promise<UserRecord | null> {
       id: user.id,
       email: user.email || "",
       displayName,
+      avatarUrl: avatarUrl || undefined,
       createdAt: user.created_at,
     };
   } catch (err) {

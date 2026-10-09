@@ -123,10 +123,19 @@ export async function getUserById(id: string): Promise<UserRecord | null> {
     email.split("@")[0] ||
     "Security Lead";
 
+  const avatarUrl =
+    profile?.avatar_url ||
+    authUser?.user?.user_metadata?.avatar_url ||
+    authUser?.user?.user_metadata?.picture ||
+    authUser?.user?.identities?.[0]?.identity_data?.avatar_url ||
+    authUser?.user?.identities?.[0]?.identity_data?.picture ||
+    undefined;
+
   return {
     id,
     email,
     displayName,
+    avatarUrl,
     createdAt: profile?.created_at || authUser?.user?.created_at || new Date().toISOString(),
   };
 }

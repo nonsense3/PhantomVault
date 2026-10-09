@@ -11,6 +11,7 @@ interface UserInfo {
   id: string;
   email: string;
   displayName: string;
+  avatarUrl?: string | null;
 }
 
 export function Navbar() {
@@ -120,10 +121,28 @@ export function Navbar() {
             <div className="flex items-center gap-3">
               <Link
                 href="/profile"
-                className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] hover:text-[var(--accent-cobalt)]"
+                className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] hover:text-[var(--accent-cobalt)] group"
                 title="View operator profile"
               >
-                <User className="w-3.5 h-3.5" />
+                <div className="w-5 h-5 border border-[var(--border-strong)] bg-black/5 dark:bg-white/5 flex items-center justify-center overflow-hidden shrink-0 relative">
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.displayName}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fb = e.currentTarget.parentElement?.querySelector(".fallback-nav-icon");
+                        if (fb) (fb as HTMLElement).style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  <div className={`fallback-nav-icon w-full h-full items-center justify-center ${user.avatarUrl ? "hidden" : "flex"}`}>
+                    <User className="w-3 h-3 text-[var(--text-secondary)]" />
+                  </div>
+                </div>
                 <span className="truncate max-w-[120px]">{user.displayName}</span>
               </Link>
               <button
