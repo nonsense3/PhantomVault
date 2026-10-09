@@ -42,6 +42,10 @@ export default function DashboardPage() {
   const fetchData = async () => {
     try {
       const res = await fetch("/api/incidents");
+      if (res.status === 401) {
+        window.location.href = "/login?redirect=/dashboard";
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setStats(data.stats);

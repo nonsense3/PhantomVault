@@ -61,7 +61,11 @@ export default function LoginPage() {
         throw new Error(data.error || "Failed to sign in");
       }
 
-      router.push("/dashboard");
+      const targetUrl =
+        (typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("redirect")
+          : null) || "/dashboard";
+      router.push(targetUrl);
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sign in failed");
@@ -79,7 +83,13 @@ export default function LoginPage() {
         throw new Error("Authentication service is currently unavailable");
       }
 
-      const redirectTo = `${window.location.origin}/auth/callback`;
+      const redirectParam =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("redirect")
+          : null;
+      const redirectTo = `${window.location.origin}/auth/callback${
+        redirectParam ? `?next=${encodeURIComponent(redirectParam)}` : ""
+      }`;
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {

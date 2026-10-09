@@ -2,9 +2,13 @@ import React from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { ConsoleButton } from "@/components/console-button";
+import { getCurrentUser } from "@/lib/server/auth";
 import { ArrowRight, ShieldCheck, Zap, Terminal, Clock, Lock, Sparkles } from "lucide-react";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getCurrentUser();
+  const isLoggedIn = !!user;
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
       <Navbar />
@@ -53,10 +57,10 @@ export default function HomePage() {
                 </div>
 
                 <div className="xl:col-span-5 flex flex-wrap items-center gap-3.5">
-                  <Link href="/dashboard" className="poster-btn whitespace-nowrap">
+                  <ConsoleButton initialLoggedIn={isLoggedIn} className="poster-btn whitespace-nowrap">
                     <span>Enter Console</span>
                     <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  </ConsoleButton>
                   <Link
                     href="/analyze"
                     className="poster-btn-secondary whitespace-nowrap"
@@ -247,12 +251,13 @@ export default function HomePage() {
                   READY TO TEST WITH DEMO CREDENTIALS: <br />
                   <span className="font-bold text-[var(--text-primary)]">demo@phantomvault.ai / phantomvault</span>
                 </div>
-                <Link
-                  href="/dashboard"
+                <ConsoleButton
+                  initialLoggedIn={isLoggedIn}
                   className="poster-btn text-base"
                 >
-                  Launch PhantomVault Console
-                </Link>
+                  <span>Launch PhantomVault Console</span>
+                  <ArrowRight className="w-4 h-4" />
+                </ConsoleButton>
               </div>
             </div>
           </div>
