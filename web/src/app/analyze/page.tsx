@@ -402,8 +402,9 @@ export default function AnalyzerPage() {
                       </span>
                     </div>
                     <div className="text-[10px] text-[var(--text-muted)] mt-1 truncate">
-                      Click to scan instantly with Gemma 4
+                      Click to run instant threat scan
                     </div>
+
                   </button>
                 ))}
               </div>
@@ -747,23 +748,20 @@ export default function AnalyzerPage() {
               className="poster-btn w-full sm:w-auto"
             >
               {loading ? (
-                <>
-                  <Sparkles className="w-4 h-4 animate-spin text-amber-400" />
-                  <span>Gemma 4 Dissecting Threat Matrix...</span>
-                </>
+                <span>Analyzing Threat...</span>
               ) : activeTab === "attachment" ? (
                 <>
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>Analyze Attachment with Gemma 4 (Zero-Download Cloud Scan)</span>
+                  <span>Scan Attachment</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               ) : (
                 <>
-                  <span>Run Threat Analysis with Gemma 4</span>
+                  <span>Analyze Threat</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
+
           </form>
 
           {/* ============================================================= */}
