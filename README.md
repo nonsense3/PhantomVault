@@ -10,11 +10,11 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start-running-locally"><img src="https://img.shields.io/badge/Status-Live_MVP-success?style=for-the-badge&logo=shield" alt="Status" /></a>
-  <a href="#-gemma-4-core-capabilities"><img src="https://img.shields.io/badge/Powered_by-Gemma_4-4285F4?style=for-the-badge&logo=google" alt="Powered by Gemma 4" /></a>
-  <a href="#-design-system-reality-first-poster-modernism"><img src="https://img.shields.io/badge/Design-Reality--First_Modernism-1351AA?style=for-the-badge" alt="Design" /></a>
-  <a href="#-quick-start-running-locally"><img src="https://img.shields.io/badge/Next.js-15_Turbopack-000000?style=for-the-badge&logo=nextdotjs" alt="Next.js" /></a>
-  <a href="#7-total-tech-stack"><img src="https://img.shields.io/badge/Tech_Stack-Full_Matrix-1351AA?style=for-the-badge" alt="Tech Stack" /></a>
+  <a href="#4-quick-start-running-locally"><img src="https://img.shields.io/badge/Status-Live_MVP-success?style=for-the-badge&logo=shield" alt="Status" /></a>
+  <a href="#3-gemma-4-core-capabilities-demonstrated"><img src="https://img.shields.io/badge/Powered_by-Gemma_4-4285F4?style=for-the-badge&logo=google" alt="Powered by Gemma 4" /></a>
+  <a href="#2-design-system-reality-first-poster-modernism"><img src="https://img.shields.io/badge/Design-Reality--First_Modernism-1351AA?style=for-the-badge" alt="Design" /></a>
+  <a href="#4-quick-start-running-locally"><img src="https://img.shields.io/badge/Next.js-15_Turbopack-000000?style=for-the-badge&logo=nextdotjs" alt="Next.js" /></a>
+  <a href="#6-total-tech-stack"><img src="https://img.shields.io/badge/Tech_Stack-Full_Matrix-1351AA?style=for-the-badge" alt="Tech Stack" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License: MIT" /></a>
 </p>
 
@@ -52,6 +52,27 @@ Passive containment that fundamentally reverses the economic incentives of scam 
 Instant trap deployment in under 60 seconds with pre-seeded demo accounts and multi-turn threat incidents.
 
 ![Start Exploring & Demo Access](screenshots/05-quick-start-demo.png)
+
+---
+
+### 6. Public Attacker Decoy: Deceptive Banking Sign-In (`/t/[slug]`)
+Adversary-facing fake corporate and online banking portal that traps malicious actors, rejects illegitimate attempts with plausible error prompts, and captures threat telemetry.
+
+![Public Attacker Decoy Portal](screenshots/06-decoy-portal-login.png)
+
+---
+
+### 7. Adversary Stalling: Security Identity Challenge
+Dynamic security question roadblocks (e.g. secret birth city challenge) that force scammers into protracted engagement loops while extracting their origin IP and behavioral signatures.
+
+![Security Identity Challenge](screenshots/07-decoy-identity-challenge.png)
+
+---
+
+### 8. Fake Client Dashboard & Wire Transfer Interception
+Simulated client banking account dashboard presenting a fake £100 balance, intercepting wire transfer demands (£450.00), payee names, and IBAN/sort codes into the forensic vault.
+
+![Client Account Dashboard & Wire Interception](screenshots/08-decoy-wire-transfer.png)
 
 ---
 
@@ -102,45 +123,7 @@ The interface is engineered with a strict, utilitarian aesthetic prioritizing fo
 
 ---
 
-## 4. Key Screens & Route Index
-
-- **`/` — Landing Page:** Manifesto, 12-column System Architecture grid, live terminal spectator preview (`Incident #INC-LIVE-01`), Why Different comparisons, and theme toggle.
-- **`/login` & `/register` — Authentication:** Privacy-focused auth with one-click **"PREFILL DEMO ACCOUNT"** button.
-- **`/dashboard` — Operations Console:**
-  - Real-time KPI cards: Active Decoys, Scammers Trapped, Live Time Wasted stopwatch ticker, IoC count.
-  - Active Trap Network table with quick pause/resume toggles and shareable link copying.
-  - **Live Incident Stream** updating in real time via Server-Sent Events (`/api/live`).
-  - **"Simulate Attacker Turn"** button to inject live adversarial actions during evaluations.
-- **`/analyze` — Scam Analyzer:**
-  - Multimodal analysis tab (raw text, suspicious URL, or screenshot upload).
-  - Quick sample threat loader (AML Escrow Scam, Bank SMS, Overdue Invoice).
-  - Detailed threat classification card with observed red flags and extracted IoCs.
-  - One-click **"Turn into Decoy Trap"** prefill button.
-- **`/traps/new` — Honeypot Deployment:**
-  - Choose between *Forward-a-Scam Page* and *Fake Login Portal (Northwind Secure Bank)*.
-  - Select persona archetype and configure the 0–100 Gullibility Index slider.
-- **`/incidents/[id]` — Split-Screen Spectator View:**
-  - Left pane: Adversary inbound transmissions.
-  - Right pane: Decoy persona responses with typed action badges.
-  - Live scammer time-wasted counter.
-  - Interactive **"Simulate Scammer Turn"** button.
-  - Evidence Vault tray with one-click copyable indicators.
-  - **Export Evidence (JSON)** formatted for banks and authorities.
-- **`/intel` — Threat Intelligence Center:**
-  - Filterable IoC table (Crypto Wallets, Emails, Domains, URLs, IPs, Bank Accounts, Phone Numbers).
-  - Search by address, domain, or indicator value with full JSON export.
-- **`/settings` — Security & Policies:**
-  - Data minimization retention slider (7–90 days).
-  - Ethical confinement rules.
-  - Designated **"Powered by Gemma 4"** specification badge.
-- **`/t/[slug]` — Public Attacker Decoy:**
-  - Zero tech-stack leakage (no vendor hints, clean fictional corporate branding).
-  - Interactive fake bank login portal or personal reply channel.
-  - Ethical abuse report modal at the footer.
-
----
-
-## 5. Quick Start (Running Locally)
+## 4. Quick Start (Running Locally)
 
 ### Prerequisites
 - **Node.js**: v18+ (tested on Node v24 with Next.js Turbopack)
@@ -187,7 +170,7 @@ The platform includes pre-seeded demo traps and multi-turn threat incidents:
 
 ---
 
-## 6. Security Protocols & Ethical Confinement
+## 5. Security Protocols & Ethical Confinement
 
 PhantomVault adheres strictly to ethical defensive cybersecurity principles:
 
@@ -198,7 +181,7 @@ PhantomVault adheres strictly to ethical defensive cybersecurity principles:
 
 ---
 
-## 7. Total Tech Stack
+## 6. Total Tech Stack
 
 <p align="center">
   <img src="https://img.shields.io/badge/Google_Gemma_4-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Gemma 4" />
@@ -239,7 +222,7 @@ PhantomVault adheres strictly to ethical defensive cybersecurity principles:
 
 ---
 
-## 8. Repository Structure
+## 7. Repository Structure
 
 ```text
 PhantomVault/
@@ -252,7 +235,10 @@ PhantomVault/
 │   ├── 02-live-incident-terminal.png
 │   ├── 03-operations-dashboard.png
 │   ├── 04-why-different-principles.png
-│   └── 05-quick-start-demo.png
+│   ├── 05-quick-start-demo.png
+│   ├── 06-decoy-portal-login.png
+│   ├── 07-decoy-identity-challenge.png
+│   └── 08-decoy-wire-transfer.png
 └── web/                           # Next.js 15 application root
     ├── src/
     │   ├── app/                   # App Router pages and API routes
@@ -273,7 +259,6 @@ PhantomVault/
 
 ---
 
-## 9. License
+## 8. License
 
 This project is open-source and licensed under the [MIT License](LICENSE).
-
