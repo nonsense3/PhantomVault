@@ -203,7 +203,6 @@ PhantomVault adheres strictly to ethical defensive cybersecurity principles:
 | :--- | :--- | :--- |
 | **AI Vision & Inference** | <img src="https://cdn.simpleicons.org/google/4285F4" width="16" height="16" alt="Google" /> **Google Gemma 4** (`gemma-4-31b-it`) | Multimodal computer vision for analyzing phishing screenshots, long-context conversational reasoning, and adaptive persona engagement |
 | **AI Gateway** | <img src="https://cdn.simpleicons.org/googlecloud/4285F4" width="16" height="16" alt="Google Cloud" /> **Google AI Studio API** | Direct low-latency cloud endpoint for Gemma 4 structured JSON generation and function calling |
-| **Fail-Safe AI Engine** | <img src="https://cdn.simpleicons.org/gnubash/4EAA25" width="16" height="16" alt="Deterministic Engine" /> **Deterministic Engine** | Built-in offline fallback engine executing heuristic persona turns with zero API downtime |
 | **Web Framework** | <img src="https://cdn.simpleicons.org/nextdotjs/0070F3" width="16" height="16" alt="Next.js" /> **Next.js 15+ (App Router)** | Full-stack foundation utilizing React Server Components, Server-Sent Events (SSE), and Edge API routes |
 | **UI Library** | <img src="https://cdn.simpleicons.org/react/61DAFB" width="16" height="16" alt="React" /> **React 19** | Concurrent rendering, reactive telemetry tickers, split-screen incident spectator, and state transitions |
 | **Language** | <img src="https://cdn.simpleicons.org/typescript/3178C6" width="16" height="16" alt="TypeScript" /> **TypeScript 5** | Strict end-to-end static typing for forensic schemas, persona dialogue trees, and telemetry models |
@@ -216,9 +215,7 @@ PhantomVault adheres strictly to ethical defensive cybersecurity principles:
 | **Schema Validation** | <img src="https://cdn.simpleicons.org/zod/3E67B1" width="16" height="16" alt="Zod" /> **Zod** | Runtime type validation for inbound threat payloads, LLM JSON extraction, and forensic exports |
 | **Synthetic Defense** | 🛡️ **Data Poisoning Engine** | Mathematical generation of Luhn-invalid credit cards, dummy OTPs, fake routing numbers, and fictional wire receipts |
 | **Telemetry Push** | 📡 **Server-Sent Events (SSE)** | Unidirectional event stream (`/api/live`) streaming live adversary actions to the dashboard in real time |
-| **Build & Bundler** | <img src="https://cdn.simpleicons.org/turborepo/EF4444" width="16" height="16" alt="Turbopack" /> **Turbopack** | High-performance Rust-powered bundler providing instant compilation and HMR |
 | **Runtime** | <img src="https://cdn.simpleicons.org/nodedotjs/5FA04E" width="16" height="16" alt="Node.js" /> **Node.js** | Server execution environment (`>= 20.9.0`) |
-| **Code Quality** | <img src="https://cdn.simpleicons.org/eslint/4B32C3" width="16" height="16" alt="ESLint" /> **ESLint 9** | Code standards, Next.js lint rules, and automated formatting consistency |
 
 ---
 
