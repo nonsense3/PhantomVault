@@ -211,73 +211,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ================================================================= */}
-        {/* LIVE SPECTATOR / DEMO SECTION                                     */}
-        {/* ================================================================= */}
-        <section className="border-b border-[var(--border-color)] bg-[var(--bg-surface)]">
-          <div className="max-w-[1600px] mx-auto grid grid-cols-12">
-            <div className="col-span-12 md:col-span-3 border-b md:border-b-0 md:border-r border-[var(--border-color)] p-8">
-              <span className="grid-sidebar-label">LIVE ENGAGEMENT SPEC</span>
-              <div className="mt-8 space-y-4 text-xs font-mono">
-                <div className="p-3 border border-[var(--border-color)] bg-[var(--bg-primary)]">
-                  <div className="text-[10px] text-[var(--text-muted)] uppercase">ADVERSARY TIME WASTED</div>
-                  <div className="text-2xl font-black text-[var(--accent-cobalt)] font-mono">14m 20s</div>
-                </div>
-                <div className="p-3 border border-[var(--border-color)] bg-[var(--bg-primary)]">
-                  <div className="text-[10px] text-[var(--text-muted)] uppercase">CAPTURED ARTIFACTS</div>
-                  <div className="text-lg font-bold">1 Wallet • 1 Email • 1 IP</div>
-                </div>
-              </div>
-            </div>
 
-            <div className="col-span-12 md:col-span-9 p-8 md:p-12">
-              <div className="border border-[var(--border-strong)] bg-black text-emerald-400 p-6 font-mono text-xs">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-4 text-zinc-400">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 bg-red-500 rounded-none inline-block" />
-                    <span className="text-white font-bold">INCIDENT #INC-LIVE-01</span>
-                    <span className="text-zinc-500">|</span>
-                    <span>PERSONA: ANGRY EXECUTIVE</span>
-                  </div>
-                  <span className="text-emerald-500 animate-pulse font-bold">● ACTIVE RECORDING</span>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="bg-zinc-950 p-4 border border-zinc-800">
-                    <span className="text-red-400 font-bold block mb-1">
-                      [ATTACKER 185.220.101.42]:
-                    </span>
-                    <p className="text-zinc-200">
-                      "To release funds you must pay the anti-money laundering certificate fee of $450 in USDT to wallet 0x71C8360f38bB186e8A99B8aF5aC7D913f019Fa3E immediately."
-                    </p>
-                  </div>
-
-                  <div className="bg-zinc-900/80 p-4 border border-blue-900/60 ml-6">
-                    <div className="flex items-center justify-between text-blue-400 font-bold mb-1">
-                      <span>[DECOY - RICHARD VANCE]:</span>
-                      <span className="text-[10px] bg-blue-950 text-blue-300 px-2 py-0.5 border border-blue-800">
-                        ACTION: GENERATED FAKE BANK RECEIPT
-                      </span>
-                    </div>
-                    <p className="text-zinc-200">
-                      "Do not threaten me with enforcement. I've had my assistant pull the operating account. The wire reference is NWB-TX-9921-TEST-0042. Confirm if you received the transmission on your terminal."
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-zinc-800 flex items-center justify-between text-zinc-400">
-                  <span>FORENSIC TELEMETRY STREAMING VIA SECURE ADAPTER</span>
-                  <Link
-                    href="/dashboard"
-                    className="text-white hover:text-[var(--accent-cobalt)] underline underline-offset-4"
-                  >
-                    View Realtime Dashboard →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* ================================================================= */}
         {/* ACCESS / PRICING SECTION (Min-height 50vh, 8xl Headline)           */}
