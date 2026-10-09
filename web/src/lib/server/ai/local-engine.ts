@@ -4,7 +4,7 @@ import { gullibilityParams, personaById } from "@/lib/catalog";
 import type { AnalysisResult, IocType, PersonaId, TemplateId, ThreatLevel } from "@/lib/types";
 import { extractIocs } from "./iocs";
 import { BANKS, INTENT_ACTION, type Intent } from "./personas";
-import type { AnalyzeInput, DecoyTurnInput, DecoyTurnOutput, PortalEvent, PortalResult } from "./types";
+import type { AnalyzeInput, DecoyTurnInput, DecoyTurnOutput, PortalEvent, PortalResult } from "@/lib/server/ai/types";
 
 const rand = () => randomInt(1_000_000) / 1_000_000;
 
@@ -66,7 +66,11 @@ function addTypos(text: string, rate: number): string {
 export function localDecoyReply(input: DecoyTurnInput): DecoyTurnOutput {
   const bank = BANKS[input.persona];
   const params = gullibilityParams(input.gullibility);
-  const used = new Set(input.history.filter((h) => h.role === "ai").map((h) => h.template ?? h.content));
+  const used = new Set<string>(
+    input.history
+      .filter((h: { role: string; content: string; template?: string }) => h.role === "ai")
+      .map((h: { role: string; content: string; template?: string }) => (h.template ?? h.content) as string)
+  );
   const intent = detectIntent(input.attackerMessage);
   const isThreat = THREAT_RE.test(input.attackerMessage);
   const aiTurns = input.history.filter((h) => h.role === "ai").length;
