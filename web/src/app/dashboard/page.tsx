@@ -72,7 +72,12 @@ export default function DashboardPage() {
             activeIncidents: prev.activeIncidents + 1,
           }));
         } else if (event.type === "incident.updated") {
-          setIncidents((prev) => prev.map((i) => (i.id === event.incident.id ? event.incident : i)));
+          setIncidents((prev) => {
+            const updated = prev.map((i) => (i.id === event.incident.id ? event.incident : i));
+            const totalWasted = updated.reduce((acc, inc) => acc + (inc.timeWastedSeconds || 0), 0);
+            setStats((s) => ({ ...s, timeWastedSeconds: totalWasted }));
+            return updated;
+          });
         } else if (event.type === "message.created") {
           // Refresh data on new message
           fetchData();
@@ -87,17 +92,6 @@ export default function DashboardPage() {
     return () => {
       es.close();
     };
-  }, []);
-
-  // Live time ticker for active counter (PRD DB-5)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setStats((prev) => ({
-        ...prev,
-        timeWastedSeconds: prev.activeIncidents > 0 ? prev.timeWastedSeconds + 1 : prev.timeWastedSeconds,
-      }));
-    }, 1000);
-    return () => clearInterval(timer);
   }, []);
 
   const handleCopy = (slug: string) => {

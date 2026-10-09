@@ -563,10 +563,8 @@ export async function createMessage(params: {
     .eq("id", params.incidentId)
     .maybeSingle();
 
-  const startedAtMs = inc?.started_at ? new Date(inc.started_at).getTime() : Date.now();
-  const sessionElapsed = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
-  const attackerStepBonus = params.role === "attacker" ? 15 : 0;
-  const updatedTime = Math.max((inc?.time_wasted_seconds || 0) + attackerStepBonus, sessionElapsed);
+  const attackerStepBonus = params.role === "attacker" ? Math.floor(20 + Math.random() * 15) : 0;
+  const updatedTime = (inc?.time_wasted_seconds || 0) + attackerStepBonus;
 
   await admin
     .from("incidents")

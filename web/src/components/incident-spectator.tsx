@@ -94,14 +94,18 @@ export function IncidentSpectator({ incidentId }: { incidentId: string }) {
     return () => es.close();
   }, [incidentId]);
 
-  // Live stopwatch when incident is active
+  // Live stopwatch when incident has active engagement in current session
   useEffect(() => {
     if (incident?.status !== "active") return;
+    const lastActiveMs = incident.lastActivityAt ? new Date(incident.lastActivityAt).getTime() : 0;
+    const isRecentlyActive = Date.now() - lastActiveMs < 90000;
+    if (!isRecentlyActive) return;
+
     const ticker = setInterval(() => {
       setSecondsWasted((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(ticker);
-  }, [incident?.status]);
+  }, [incident?.status, incident?.lastActivityAt]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

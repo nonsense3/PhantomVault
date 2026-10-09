@@ -38,16 +38,8 @@ export async function POST(
     }
 
     const now = new Date();
-    const startedAt = new Date(incident.startedAt).getTime();
-    const sessionDurationSeconds = Math.max(0, Math.floor((now.getTime() - startedAt) / 1000));
-
-    // Measure time wasted as per the trap network session:
-    // Takes the maximum of current time wasted, elapsed time since session start, or client-tracked active session seconds
-    const newTimeWasted = Math.max(
-      incident.timeWastedSeconds,
-      sessionDurationSeconds,
-      typeof body.clientElapsedSeconds === "number" ? body.clientElapsedSeconds : 0
-    );
+    const clientElapsed = typeof body.clientElapsedSeconds === "number" ? body.clientElapsedSeconds : 0;
+    const newTimeWasted = Math.max(incident.timeWastedSeconds, clientElapsed);
 
     await updateIncident(trap.ownerId, incident.id, {
       timeWastedSeconds: newTimeWasted,
