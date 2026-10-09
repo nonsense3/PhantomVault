@@ -285,11 +285,7 @@ Output ONLY a valid JSON object matching this schema:
             ? "Verified Clean: Forensic bytecode inspection detected no malicious payloads, weaponized macros, or deceptive masquerading."
             : scanDetails.doNotDownloadWarning,
           quarantineProtocols: finalIsClean
-            ? [
-                "FILE VERIFIED: In-memory bytecode inspection found no known exploit signatures or malware triggers.",
-                "STRUCTURE INTEGRITY: File extension and byte headers match without deceptive double extensions.",
-                "NO THREAT DETECTED: This attachment or link appears clean and safe.",
-              ]
+            ? []
             : scanDetails.quarantineProtocols,
         },
       };

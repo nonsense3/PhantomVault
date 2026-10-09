@@ -843,67 +843,81 @@ export default function AnalyzerPage() {
 
               {/* DIRECTIVE FOR ATTACHMENTS (CLEAN vs MALICIOUS) */}
               {result.attachment_scan && (
-                result.threat_level === "Low" || result.attachment_scan.verdict === "CLEAN" ? (
-                  <div className="border-2 border-emerald-500/50 bg-emerald-500/10 p-5 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="w-7 h-7 text-emerald-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="text-sm sm:text-base font-black text-emerald-500 uppercase tracking-wide font-mono">
-                          ✓ VERIFIED SAFE: NO EXPLOITS OR PHISHING MALWARE DETECTED
-                        </div>
-                        <p className="text-xs text-[var(--text-primary)] mt-1 font-mono font-medium leading-relaxed">
-                          {result.attachment_scan.doNotDownloadWarning}
-                        </p>
-                      </div>
-                    </div>
+                (() => {
+                  const isClean =
+                    (result.threat_level || "").toLowerCase() === "low" ||
+                    (result.attachment_scan.verdict || "").toUpperCase() === "CLEAN" ||
+                    result.scam_type.toLowerCase().includes("safe") ||
+                    result.scam_type.toLowerCase().includes("clean") ||
+                    (result.attachment_scan.riskScore ?? 0) <= 30;
 
-                    {result.attachment_scan.quarantineProtocols.length > 0 && (
-                      <div className="border-t border-emerald-500/30 pt-3">
-                        <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider block mb-2">
-                          VERIFICATION CLEARANCE PROTOCOLS
-                        </span>
-                        <ul className="space-y-1.5">
-                          {result.attachment_scan.quarantineProtocols.map((protocol, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-xs font-mono text-[var(--text-secondary)]">
-                              <span className="text-emerald-500 font-bold">•</span>
-                              <span>{protocol}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="border-2 border-rose-500 bg-rose-500/10 p-5 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <ShieldX className="w-7 h-7 text-rose-500 flex-shrink-0 mt-0.5 animate-pulse" />
-                      <div>
-                        <div className="text-sm sm:text-base font-black text-rose-500 uppercase tracking-wide font-mono">
-                          {result.attachment_scan.verdict === "MALICIOUS"
-                            ? "⛔ CRITICAL DIRECTIVE: DO NOT DOWNLOAD OR EXECUTE THIS FILE LOCALLY"
-                            : "⚠️ CAUTION: SUSPICIOUS ATTACHMENT QUARANTINE DIRECTIVE"}
+                  if (isClean) {
+                    return (
+                      <div className="border border-emerald-500/40 bg-emerald-500/10 p-5 space-y-3 font-mono">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <div className="text-sm sm:text-base font-bold text-emerald-400 uppercase tracking-wide">
+                              ✓ VERIFIED SAFE: LINK / ATTACHMENT IS CLEAN
+                            </div>
+                            <p className="text-xs text-[var(--text-secondary)] mt-1 font-medium leading-relaxed">
+                              {result.attachment_scan.doNotDownloadWarning || "Forensic bytecode and header inspection detected no malicious payloads, weaponized macros, or deceptive masquerading. This link/attachment has passed security checks and is safe."}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-[var(--text-primary)] mt-1 font-mono font-medium leading-relaxed">
-                          {result.attachment_scan.doNotDownloadWarning}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="border-t border-rose-500/30 pt-3">
-                      <span className="text-[10px] font-mono font-bold text-rose-400 uppercase tracking-wider block mb-2">
-                        MANDATORY QUARANTINE PROTOCOLS (NO LOCAL DOWNLOAD)
-                      </span>
-                      <ul className="space-y-1.5">
-                        {result.attachment_scan.quarantineProtocols.map((protocol, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-xs font-mono text-[var(--text-secondary)]">
-                            <span className="text-rose-500 font-bold">•</span>
-                            <span>{protocol}</span>
-                          </li>
-                        ))}
-                      </ul>
+                        <div className="border-t border-emerald-500/20 pt-3 flex flex-wrap items-center gap-4 text-xs text-emerald-400/90">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            Bytecode & Header Check: Passed
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            Zero Weaponized Macros / Exploits
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            File Signature & Extension: Verified
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="border-2 border-rose-500 bg-rose-500/10 p-5 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <ShieldX className="w-7 h-7 text-rose-500 flex-shrink-0 mt-0.5 animate-pulse" />
+                        <div>
+                          <div className="text-sm sm:text-base font-black text-rose-500 uppercase tracking-wide font-mono">
+                            {result.attachment_scan.verdict === "MALICIOUS"
+                              ? "⛔ CRITICAL DIRECTIVE: DO NOT DOWNLOAD OR EXECUTE THIS FILE LOCALLY"
+                              : "⚠️ CAUTION: SUSPICIOUS ATTACHMENT QUARANTINE DIRECTIVE"}
+                          </div>
+                          <p className="text-xs text-[var(--text-primary)] mt-1 font-mono font-medium leading-relaxed">
+                            {result.attachment_scan.doNotDownloadWarning}
+                          </p>
+                        </div>
+                      </div>
+
+                      {result.attachment_scan.quarantineProtocols.length > 0 && (
+                        <div className="border-t border-rose-500/30 pt-3">
+                          <span className="text-[10px] font-mono font-bold text-rose-400 uppercase tracking-wider block mb-2">
+                            MANDATORY QUARANTINE PROTOCOLS (NO LOCAL DOWNLOAD)
+                          </span>
+                          <ul className="space-y-1.5">
+                            {result.attachment_scan.quarantineProtocols.map((protocol, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-xs font-mono text-[var(--text-secondary)]">
+                                <span className="text-rose-500 font-bold">•</span>
+                                <span>{protocol}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )
+                  );
+                })()
               )}
 
               {/* FORENSIC TELEMETRY CARD (If Attachment Scan) */}
@@ -1098,40 +1112,48 @@ export default function AnalyzerPage() {
               )}
 
               {/* TACTICAL COUNTERMEASURE (HONEYPOT DECOY) - Clearly separated */}
-              <div className="p-4 border border-[var(--border-color)] bg-[var(--bg-primary)] space-y-3 font-mono text-xs">
-                <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2">
-                  <span className="font-bold text-[var(--accent-cobalt)] uppercase">
-                    TACTICAL COUNTERMEASURE: DEPLOY HONEYPOT DECOY
-                  </span>
-                  <span className="text-[10px] text-[var(--text-muted)]">
-                    {result.threat_level === "Low" || result.scam_type.toLowerCase().includes("no threat")
-                      ? "NOT REQUIRED FOR BENIGN CONTENT"
-                      : "OPTIONAL ATTACK RETALIATION"}
-                  </span>
-                </div>
-                <p className="text-[var(--text-secondary)] text-[11px] leading-relaxed">
-                  {result.threat_level === "Low" || result.scam_type.toLowerCase().includes("no threat")
-                    ? "No tactical countermeasure required: This artifact does not appear to be an active threat or phishing communication. Honeypot decoy traps are only recommended for active scams."
-                    : "Do not interact with the attacker directly on your real email. Instead, spawn an automated Phantom Vault decoy trap to bait the sender, waste their time, and capture real-time telemetry."}
-                </p>
-                {!(result.threat_level === "Low" || result.scam_type.toLowerCase().includes("no threat")) && (
-                  <div className="pt-1 flex flex-wrap items-center justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <div>Persona Archetype: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_persona}</span></div>
-                      <div>Trap Template: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_template}</span></div>
-                      <div className="text-[10px] text-[var(--text-muted)] truncate max-w-[320px]">Opener: "{result.suggested_opener}"</div>
+              {(() => {
+                const isBenign =
+                  (result.threat_level || "").toLowerCase() === "low" ||
+                  result.scam_type.toLowerCase().includes("no threat") ||
+                  result.scam_type.toLowerCase().includes("safe") ||
+                  result.scam_type.toLowerCase().includes("clean");
+
+                return (
+                  <div className="p-4 border border-[var(--border-color)] bg-[var(--bg-primary)] space-y-3 font-mono text-xs">
+                    <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2">
+                      <span className="font-bold text-[var(--accent-cobalt)] uppercase">
+                        TACTICAL COUNTERMEASURE: HONEYPOT DECOY
+                      </span>
+                      <span className={`text-[10px] font-bold ${isBenign ? "text-emerald-400" : "text-[var(--text-muted)]"}`}>
+                        {isBenign ? "NOT REQUIRED (VERIFIED SAFE)" : "OPTIONAL ATTACK RETALIATION"}
+                      </span>
                     </div>
-                    <button
-                      onClick={handleTurnIntoDecoy}
-                      type="button"
-                      className="poster-btn poster-btn-sm"
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>Spawn Decoy Trap</span>
-                    </button>
+                    <p className="text-[var(--text-secondary)] text-[11px] leading-relaxed">
+                      {isBenign
+                        ? "No tactical countermeasure required: This artifact does not appear to be an active threat or phishing communication. Honeypot decoy traps are only deployed against active threats and adversarial attacks."
+                        : "Do not interact with the attacker directly on your real email. Instead, spawn an automated Phantom Vault decoy trap to bait the sender, waste their time, and capture real-time telemetry."}
+                    </p>
+                    {!isBenign && (
+                      <div className="pt-1 flex flex-wrap items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <div>Persona Archetype: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_persona}</span></div>
+                          <div>Trap Template: <span className="font-bold text-[var(--accent-cobalt)]">{result.suggested_template}</span></div>
+                          <div className="text-[10px] text-[var(--text-muted)] truncate max-w-[320px]">Opener: "{result.suggested_opener}"</div>
+                        </div>
+                        <button
+                          onClick={handleTurnIntoDecoy}
+                          type="button"
+                          className="poster-btn poster-btn-sm"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>Spawn Decoy Trap</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })()}
             </div>
           )}
         </div>

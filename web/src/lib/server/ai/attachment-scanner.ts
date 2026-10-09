@@ -424,11 +424,7 @@ export function scanAttachment(input: AttachmentScanInput): {
       : "✓ VERIFIED SAFE: Forensic bytecode inspection detected no malicious payloads, weaponized macros, or deceptive masquerading. File passed security checks.";
 
   const quarantineProtocols = isClean
-    ? [
-        "FILE INTEGRITY VERIFIED: In-memory bytecode analysis found no known exploit signatures or malware droppers.",
-        "STRUCTURE INTEGRITY: File extension and byte headers match without deceptive double extensions.",
-        "NO THREAT DETECTED: This attachment or link appears clean and safe to access.",
-      ]
+    ? []
     : [
         "QUARANTINE IMMEDIATELY: Do NOT save to your local hard drive, extract from archives, or run the file.",
         "PURGE EMAIL: Delete the incoming phishing email from your inbox and permanently empty it from your trash.",
